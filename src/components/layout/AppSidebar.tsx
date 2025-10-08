@@ -24,6 +24,7 @@ import {
   FlaskConical,
   Dna,
   Network,
+  Shield,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -98,7 +99,23 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {userRole === "admin" && (
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {userRole === "admin" && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/admin" className={getNavCls}>
+                      <Shield className="h-4 w-4" />
+                      {!collapsed && <span>Admin Dashboard</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink to="/users" className={getNavCls}>
@@ -107,10 +124,10 @@ export function AppSidebar() {
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel>Departments</SidebarGroupLabel>
