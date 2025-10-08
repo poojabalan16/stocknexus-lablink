@@ -197,7 +197,6 @@ const Users = () => {
                       <TableHead>Email</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Role</TableHead>
-                      <TableHead>Justification</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -209,7 +208,6 @@ const Users = () => {
                         <TableCell>{request.email}</TableCell>
                         <TableCell>{request.department}</TableCell>
                         <TableCell className="capitalize">{request.requested_role}</TableCell>
-                        <TableCell className="max-w-xs truncate">{request.justification || "N/A"}</TableCell>
                         <TableCell>{getStatusBadge(request.status)}</TableCell>
                         <TableCell>
                           {request.status === "pending" && (

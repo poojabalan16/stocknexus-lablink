@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Database, Package } from "lucide-react";
@@ -24,7 +23,6 @@ const Auth = () => {
   const [regEmail, setRegEmail] = useState("");
   const [regDepartment, setRegDepartment] = useState("");
   const [regRole, setRegRole] = useState("");
-  const [regJustification, setRegJustification] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +60,6 @@ const Auth = () => {
           full_name: regFullName,
           department: regDepartment as any,
           requested_role: regRole as any,
-          justification: regJustification,
         }]);
 
       if (error) throw error;
@@ -74,7 +71,6 @@ const Auth = () => {
       setRegEmail("");
       setRegDepartment("");
       setRegRole("");
-      setRegJustification("");
     } catch (error: any) {
       if (error.message.includes("duplicate")) {
         toast.error("A registration request with this email already exists");
@@ -198,16 +194,6 @@ const Auth = () => {
                         <SelectItem value="staff">Staff</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-justification">Justification</Label>
-                    <Textarea
-                      id="reg-justification"
-                      placeholder="Why do you need access to this system?"
-                      value={regJustification}
-                      onChange={(e) => setRegJustification(e.target.value)}
-                      rows={3}
-                    />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Submitting..." : "Submit Request"}
