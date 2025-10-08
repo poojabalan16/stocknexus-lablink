@@ -251,6 +251,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      setup_admin_account: {
+        Args: {
+          admin_department: Database["public"]["Enums"]["department"]
+          admin_email: string
+          admin_full_name: string
+          admin_password: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "hod" | "staff"
