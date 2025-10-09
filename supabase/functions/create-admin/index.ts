@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,9 +8,9 @@ const corsHeaders = {
 
 interface CreateAdminRequest {
   email: string;
-  password: string;
+  password?: string;
   fullName: string;
-  department: string;
+  department?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -23,81 +23,98 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
+        auth: { autoRefreshToken: false, persistSession: false },
       }
     );
 
     const { email, password, fullName, department }: CreateAdminRequest = await req.json();
 
-    // Create user in auth.users
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: fullName,
-      },
-    });
+    if (!email) {
+      return new Response(JSON.stringify({ error: "email is required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    if (userError) throw userError;
+    let userId: string | null = null;
 
-    // Create profile
+    // Try to create the user if a password is provided
+    if (password) {
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
+      });
+      if (!createErr && created?.user?.id) {
+        userId = created.user.id;
+        console.log("Created new user for", email, userId);
+      } else if (createErr) {
+        console.warn("Create user error (may already exist):", createErr.message);
+      }
+    }
+
+    // If userId not set, try to find an existing user by email via admin list
+    if (!userId) {
+      const { data: listData, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (listErr) throw listErr;
+      const existing = listData.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+      if (existing) {
+        userId = existing.id;
+      }
+    }
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "User not found or could not be created" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Upsert profile
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
-      .insert({
-        id: userData.user.id,
-        email: email,
-        full_name: fullName,
-        department: department,
-      });
-
+      .upsert(
+        {
+          id: userId,
+          email,
+          full_name: fullName || "Admin User",
+          department: (department as any) ?? null,
+        },
+        { onConflict: "id" }
+      );
     if (profileError) throw profileError;
 
-    // Grant admin role
+    // Upsert admin role
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
-      .insert({
-        user_id: userData.user.id,
-        role: "admin",
-        department: department,
-      });
-
+      .upsert(
+        {
+          user_id: userId,
+          role: "admin" as any,
+          department: (department as any) ?? null,
+        },
+        { onConflict: "user_id,role" }
+      );
     if (roleError) throw roleError;
 
-    // Update registration request
+    // Mark registration request approved
     const { error: requestError } = await supabaseAdmin
       .from("registration_requests")
-      .update({
-        status: "approved",
-        reviewed_at: new Date().toISOString(),
-      })
+      .update({ status: "approved", reviewed_at: new Date().toISOString() })
       .eq("email", email);
-
-    if (requestError) console.error("Failed to update registration request:", requestError);
+    if (requestError) console.warn("Failed updating registration request:", requestError.message);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        userId: userData.user.id,
-        email: userData.user.email,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      JSON.stringify({ success: true, userId, email }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
-    console.error("Error creating admin:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    console.error("Error in create-admin:", error);
+    return new Response(JSON.stringify({ error: error.message || "Unknown error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 };
 

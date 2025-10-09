@@ -24,6 +24,11 @@ const Auth = () => {
   const [regDepartment, setRegDepartment] = useState("");
   const [regRole, setRegRole] = useState("");
 
+  // Sign up state
+  const [signUpFullName, setSignUpFullName] = useState("");
+  const [signUpEmail, setSignUpEmail] = useState("");
+  const [signUpDepartment, setSignUpDepartment] = useState("");
+  const [signUpPassword, setSignUpPassword] = useState("");
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -42,6 +47,48 @@ const Auth = () => {
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      const { error } = await supabase.auth.signUp({
+        email: signUpEmail,
+        password: signUpPassword,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: { full_name: signUpFullName },
+        },
+      });
+
+      if (error) throw error;
+
+      if (signUpEmail.toLowerCase() === "admin@stocknexus.com") {
+        const { error: fnError } = await supabase.functions.invoke("create-admin", {
+          body: {
+            email: signUpEmail,
+            password: signUpPassword,
+            fullName: signUpFullName,
+            department: signUpDepartment || "IT",
+          },
+        });
+        if (fnError) throw fnError as any;
+        toast.success("Admin account initialized. You can now sign in as admin.");
+      } else {
+        toast.success("Sign up successful! You can now sign in.");
+      }
+
+      setSignUpFullName("");
+      setSignUpEmail("");
+      setSignUpDepartment("");
+      setSignUpPassword("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign up");
     } finally {
       setLoading(false);
     }
@@ -94,8 +141,9 @@ const Auth = () => {
         </div>
 
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
             <TabsTrigger value="register">Request Access</TabsTrigger>
           </TabsList>
 
@@ -131,6 +179,71 @@ const Auth = () => {
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="signup">
+            <Card>
+              <CardHeader>
+                <CardTitle>Create Account</CardTitle>
+                <CardDescription>Sign up with your email and a password</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Full Name</Label>
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      placeholder="John Doe"
+                      value={signUpFullName}
+                      onChange={(e) => setSignUpFullName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="admin@stocknexus.com"
+                      value={signUpEmail}
+                      onChange={(e) => setSignUpEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-department">Department</Label>
+                    <Select value={signUpDepartment} onValueChange={setSignUpDepartment}>
+                      <SelectTrigger id="signup-department">
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="IT">IT</SelectItem>
+                        <SelectItem value="AIDS">AIDS</SelectItem>
+                        <SelectItem value="CSE">CSE</SelectItem>
+                        <SelectItem value="Physics">Physics</SelectItem>
+                        <SelectItem value="Chemistry">Chemistry</SelectItem>
+                        <SelectItem value="Bio-tech">Bio-tech</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signUpPassword}
+                      onChange={(e) => setSignUpPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>
               </CardContent>
