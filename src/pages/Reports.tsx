@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, Download } from "lucide-react";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -36,17 +39,24 @@ const Reports = () => {
         query = query.eq("department", department as any);
       }
 
-      const { data, error } = await query;
+      const { data: rawData, error } = await query;
       if (error) throw error;
+
+      // Filter for low stock if needed
+      let data = rawData;
+      if (reportType === "low-stock") {
+        data = rawData?.filter(item => item.quantity <= (item.low_stock_threshold || 5));
+      }
 
       if (!data || data.length === 0) {
         toast.error("No data available for the selected filters");
         return;
       }
 
-      // Generate CSV
+      const fileName = `inventory-report-${department}-${new Date().toISOString().split('T')[0]}`;
+      const headers = ["Name", "Category", "Model", "Serial Number", "Quantity", "Location", "Department", "Status"];
+      
       if (format === "csv") {
-        const headers = ["Name", "Category", "Model", "Serial Number", "Quantity", "Location", "Department", "Status"];
         const csvContent = [
           headers.join(","),
           ...data.map(item => [
@@ -65,14 +75,68 @@ const Reports = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `inventory-report-${department}-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `${fileName}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
+      } else if (format === "excel") {
+        const worksheetData = [
+          headers,
+          ...data.map(item => [
+            item.name,
+            item.category,
+            item.model || "",
+            item.serial_number || "",
+            item.quantity,
+            item.location || "",
+            item.department,
+            item.status,
+          ])
+        ];
+
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
+
+        // Set column widths
+        worksheet["!cols"] = [
+          { wch: 30 }, { wch: 15 }, { wch: 20 }, { wch: 20 },
+          { wch: 10 }, { wch: 20 }, { wch: 15 }, { wch: 15 }
+        ];
+
+        XLSX.writeFile(workbook, `${fileName}.xlsx`);
+      } else if (format === "pdf") {
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text("Inventory Report", 14, 20);
+        doc.setFontSize(11);
+        doc.text(`Department: ${department === "all" ? "All Departments" : department}`, 14, 30);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 37);
+
+        autoTable(doc, {
+          head: [headers],
+          body: data.map(item => [
+            item.name,
+            item.category,
+            item.model || "",
+            item.serial_number || "",
+            item.quantity,
+            item.location || "",
+            item.department,
+            item.status,
+          ]),
+          startY: 45,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [59, 130, 246] },
+        });
+
+        doc.save(`${fileName}.pdf`);
       }
 
       toast.success("Report generated successfully!");
     } catch (error: any) {
       toast.error("Failed to generate report");
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -99,32 +163,88 @@ const Reports = () => {
         return;
       }
 
-      // Generate CSV
+      const fileName = `alerts-report-${new Date().toISOString().split('T')[0]}`;
       const headers = ["Alert Type", "Message", "Severity", "Item", "Department", "Status", "Created At"];
-      const csvContent = [
-        headers.join(","),
-        ...data.map(alert => [
-          `"${alert.alert_type}"`,
-          `"${alert.message}"`,
-          `"${alert.severity}"`,
-          `"${alert.inventory_items?.name || "N/A"}"`,
-          `"${alert.inventory_items?.department || "N/A"}"`,
-          `"${alert.is_resolved ? "Resolved" : "Pending"}"`,
-          `"${new Date(alert.created_at).toLocaleString()}"`,
-        ].join(","))
-      ].join("\n");
 
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `alerts-report-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      if (format === "csv") {
+        const csvContent = [
+          headers.join(","),
+          ...data.map(alert => [
+            `"${alert.alert_type}"`,
+            `"${alert.message}"`,
+            `"${alert.severity}"`,
+            `"${alert.inventory_items?.name || "N/A"}"`,
+            `"${alert.inventory_items?.department || "N/A"}"`,
+            `"${alert.is_resolved ? "Resolved" : "Pending"}"`,
+            `"${new Date(alert.created_at).toLocaleString()}"`,
+          ].join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${fileName}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } else if (format === "excel") {
+        const worksheetData = [
+          headers,
+          ...data.map(alert => [
+            alert.alert_type,
+            alert.message,
+            alert.severity,
+            alert.inventory_items?.name || "N/A",
+            alert.inventory_items?.department || "N/A",
+            alert.is_resolved ? "Resolved" : "Pending",
+            new Date(alert.created_at).toLocaleString(),
+          ])
+        ];
+
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Alerts");
+
+        worksheet["!cols"] = [
+          { wch: 15 }, { wch: 50 }, { wch: 10 }, { wch: 25 },
+          { wch: 15 }, { wch: 10 }, { wch: 20 }
+        ];
+
+        XLSX.writeFile(workbook, `${fileName}.xlsx`);
+      } else if (format === "pdf") {
+        const doc = new jsPDF('landscape');
+        
+        doc.setFontSize(18);
+        doc.text("Alerts Report", 14, 20);
+        doc.setFontSize(11);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+
+        autoTable(doc, {
+          head: [headers],
+          body: data.map(alert => [
+            alert.alert_type,
+            alert.message,
+            alert.severity,
+            alert.inventory_items?.name || "N/A",
+            alert.inventory_items?.department || "N/A",
+            alert.is_resolved ? "Resolved" : "Pending",
+            new Date(alert.created_at).toLocaleString(),
+          ]),
+          startY: 40,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [59, 130, 246] },
+          columnStyles: {
+            1: { cellWidth: 80 }
+          }
+        });
+
+        doc.save(`${fileName}.pdf`);
+      }
 
       toast.success("Alerts report generated successfully!");
     } catch (error: any) {
       toast.error("Failed to generate alerts report");
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -188,8 +308,8 @@ const Reports = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="csv">CSV</SelectItem>
-                      <SelectItem value="excel">Excel (Coming Soon)</SelectItem>
-                      <SelectItem value="pdf">PDF (Coming Soon)</SelectItem>
+                      <SelectItem value="excel">Excel (XLSX)</SelectItem>
+                      <SelectItem value="pdf">PDF</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
