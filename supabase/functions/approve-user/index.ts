@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -100,9 +100,28 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send confirmation email
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-    const siteUrl = Deno.env.get("SUPABASE_URL")?.replace("https://", "").replace(".supabase.co", "") || "";
-    const appUrl = `https://id-preview--${siteUrl}.lovable.app`;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          userId,
+          message: "User approved but email could not be sent (RESEND_API_KEY not configured)" 
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
+    const resend = new Resend(resendApiKey);
+    const projectId = Deno.env.get("SUPABASE_URL")?.split("//")[1]?.split(".")[0] || "lhlxygosvltrqigfathv";
+    const appUrl = `https://id-preview--${projectId}.lovable.app`;
 
     await resend.emails.send({
       from: "StockNexus <onboarding@resend.dev>",
