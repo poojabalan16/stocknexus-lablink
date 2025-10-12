@@ -63,6 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
     const userId = userData.user.id;
 
     // Insert profile
+    console.log('Attempting to insert profile for user:', userId);
     const { error: profileError } = await supabaseClient
       .from("profiles")
       .insert({
@@ -73,8 +74,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
     if (profileError) {
+      console.error('Profile creation error:', profileError);
       throw new Error(`Failed to create profile: ${profileError.message}`);
     }
+    console.log('Profile created successfully');
 
     // Assign role
     const { error: roleError } = await supabaseClient
