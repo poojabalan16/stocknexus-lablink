@@ -211,6 +211,62 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          cost: number | null
+          created_at: string
+          created_by: string | null
+          department: Database["public"]["Enums"]["department"]
+          equipment_id: string
+          id: string
+          nature_of_service: Database["public"]["Enums"]["nature_of_service"]
+          remarks: string | null
+          service_date: string
+          service_type: Database["public"]["Enums"]["service_type"]
+          status: Database["public"]["Enums"]["service_status"]
+          technician_vendor_name: string
+          updated_at: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          department: Database["public"]["Enums"]["department"]
+          equipment_id: string
+          id?: string
+          nature_of_service: Database["public"]["Enums"]["nature_of_service"]
+          remarks?: string | null
+          service_date: string
+          service_type: Database["public"]["Enums"]["service_type"]
+          status?: Database["public"]["Enums"]["service_status"]
+          technician_vendor_name: string
+          updated_at?: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          department?: Database["public"]["Enums"]["department"]
+          equipment_id?: string
+          id?: string
+          nature_of_service?: Database["public"]["Enums"]["nature_of_service"]
+          remarks?: string | null
+          service_date?: string
+          service_type?: Database["public"]["Enums"]["service_type"]
+          status?: Database["public"]["Enums"]["service_status"]
+          technician_vendor_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -264,6 +320,13 @@ export type Database = {
     Enums: {
       app_role: "admin" | "hod" | "staff"
       department: "IT" | "AIDS" | "CSE" | "Physics" | "Chemistry" | "Bio-tech"
+      nature_of_service:
+        | "maintenance"
+        | "repair"
+        | "calibration"
+        | "installation"
+      service_status: "pending" | "in_progress" | "completed"
+      service_type: "internal" | "external"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -393,6 +456,14 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "hod", "staff"],
       department: ["IT", "AIDS", "CSE", "Physics", "Chemistry", "Bio-tech"],
+      nature_of_service: [
+        "maintenance",
+        "repair",
+        "calibration",
+        "installation",
+      ],
+      service_status: ["pending", "in_progress", "completed"],
+      service_type: ["internal", "external"],
     },
   },
 } as const

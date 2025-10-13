@@ -25,6 +25,7 @@ import {
   Dna,
   Network,
   Shield,
+  Wrench,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -121,6 +122,14 @@ export function AppSidebar() {
                     <NavLink to="/users" className={getNavCls}>
                       <Users className="h-4 w-4" />
                       {!collapsed && <span>User Management</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/services" className={getNavCls}>
+                      <Wrench className="h-4 w-4" />
+                      {!collapsed && <span>Service Registration</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
