@@ -213,6 +213,7 @@ export type Database = {
       }
       services: {
         Row: {
+          bill_photo_url: string | null
           cost: number | null
           created_at: string
           created_by: string | null
@@ -228,6 +229,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bill_photo_url?: string | null
           cost?: number | null
           created_at?: string
           created_by?: string | null
@@ -243,6 +245,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bill_photo_url?: string | null
           cost?: number | null
           created_at?: string
           created_by?: string | null

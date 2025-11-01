@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, ArrowLeft, Upload } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 const AddItem = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const AddItem = () => {
   const [specifications, setSpecifications] = useState("");
 
   // Bulk import state
-  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -111,10 +112,30 @@ const AddItem = () => {
     }
   };
 
+  const parseExcelFile = async (file: File): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          resolve(jsonData);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsBinaryString(file);
+    });
+  };
+
   const handleBulkImport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!csvFile) {
-      toast.error("Please select a CSV file");
+    if (!importFile) {
+      toast.error("Please select a file");
       return;
     }
 
@@ -124,89 +145,96 @@ const AddItem = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const text = await csvFile.text();
-      const lines = text.split("\n").filter(line => line.trim());
+      let parsedData: any[] = [];
       
-      if (lines.length < 2) {
-        toast.error("CSV file is empty or has no data rows");
+      // Handle Excel files
+      if (importFile.name.endsWith('.xlsx') || importFile.name.endsWith('.xls')) {
+        parsedData = await parseExcelFile(importFile);
+      } 
+      // Handle CSV files
+      else {
+        const text = await importFile.text();
+        const lines = text.split("\n").filter(line => line.trim());
+        
+        if (lines.length < 2) {
+          toast.error("CSV file is empty or has no data rows");
+          setLoading(false);
+          return;
+        }
+
+        const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+        parsedData = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(",").map(v => v.trim());
+          const row: any = {};
+          headers.forEach((header, index) => {
+            row[header] = values[index];
+          });
+          parsedData.push(row);
+        }
+      }
+
+      if (parsedData.length === 0) {
+        toast.error("No data found in file");
         setLoading(false);
         return;
       }
 
-      // Parse CSV header
-      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+      // Validate required fields
       const requiredFields = ["name", "category", "department", "quantity"];
+      const firstRow = parsedData[0];
+      const availableFields = Object.keys(firstRow).map(k => k.toLowerCase());
+      const missingFields = requiredFields.filter(field => !availableFields.includes(field));
       
-      const missingFields = requiredFields.filter(field => !headers.includes(field));
       if (missingFields.length > 0) {
         toast.error(`Missing required columns: ${missingFields.join(", ")}`);
         setLoading(false);
         return;
       }
 
-      // Parse data rows
-      const items = [];
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(",").map(v => v.trim());
+      // Map data to items
+      const items = parsedData.map((row: any) => {
+        const normalizedRow: any = {};
+        Object.keys(row).forEach(key => {
+          normalizedRow[key.toLowerCase()] = row[key];
+        });
+
         const item: any = {
           created_by: user.id,
           status: "available",
+          name: normalizedRow.name,
+          category: normalizedRow.category,
+          department: normalizedRow.department,
+          quantity: parseInt(normalizedRow.quantity) || 1,
+          model: normalizedRow.model || null,
+          serial_number: normalizedRow.serial_number || normalizedRow.serialnumber || null,
+          low_stock_threshold: parseInt(normalizedRow.low_stock_threshold || normalizedRow.lowstockthreshold || normalizedRow.threshold) || 5,
+          location: normalizedRow.location || null,
         };
 
-        headers.forEach((header, index) => {
-          const value = values[index];
-          switch (header) {
-            case "name":
-              item.name = value;
-              break;
-            case "category":
-              item.category = value;
-              break;
-            case "model":
-              item.model = value || null;
-              break;
-            case "serial_number":
-            case "serialnumber":
-              item.serial_number = value || null;
-              break;
-            case "quantity":
-              item.quantity = parseInt(value) || 1;
-              break;
-            case "low_stock_threshold":
-            case "lowstockthreshold":
-            case "threshold":
-              item.low_stock_threshold = parseInt(value) || 5;
-              break;
-            case "location":
-              item.location = value || null;
-              break;
-            case "department":
-              item.department = value;
-              break;
-            case "specifications":
-            case "specs":
-              try {
-                item.specifications = value ? JSON.parse(value) : {};
-              } catch {
-                item.specifications = {};
-              }
-              break;
+        // Handle specifications
+        if (normalizedRow.specifications || normalizedRow.specs) {
+          try {
+            const specsValue = normalizedRow.specifications || normalizedRow.specs;
+            item.specifications = typeof specsValue === 'string' ? JSON.parse(specsValue) : specsValue;
+          } catch {
+            item.specifications = {};
           }
-        });
-
-        // Validate required fields
-        if (item.name && item.category && item.department) {
-          items.push(item);
+        } else {
+          item.specifications = {};
         }
-      }
+
+        return item;
+      }).filter((item: any) => item.name && item.category && item.department);
 
       if (items.length === 0) {
-        toast.error("No valid items found in CSV");
+        toast.error("No valid items found in file");
         setLoading(false);
         return;
       }
 
-      // Insert items in batches
+      // Insert items
       const { error } = await supabase
         .from("inventory_items")
         .insert(items);
@@ -214,10 +242,10 @@ const AddItem = () => {
       if (error) throw error;
 
       toast.success(`Successfully imported ${items.length} item(s)!`);
-      setCsvFile(null);
+      setImportFile(null);
       
       // Reset file input
-      const fileInput = document.getElementById("csv-file") as HTMLInputElement;
+      const fileInput = document.getElementById("import-file") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
       
       navigate("/dashboard");
@@ -399,33 +427,34 @@ const AddItem = () => {
                 <div className="space-y-4">
                   <div className="rounded-lg border border-dashed p-6 text-center">
                     <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <Label htmlFor="csv-file" className="cursor-pointer">
-                      <span className="text-sm font-medium">Click to upload CSV file</span>
+                    <Label htmlFor="import-file" className="cursor-pointer">
+                      <span className="text-sm font-medium">Click to upload CSV or Excel file</span>
                       <Input
-                        id="csv-file"
+                        id="import-file"
                         type="file"
-                        accept=".csv"
+                        accept=".csv,.xlsx,.xls"
                         className="hidden"
-                        onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                        onChange={(e) => setImportFile(e.target.files?.[0] || null)}
                       />
                     </Label>
-                    {csvFile && (
+                    {importFile && (
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Selected: {csvFile.name}
+                        Selected: {importFile.name}
                       </p>
                     )}
                   </div>
 
                   <div className="rounded-lg bg-muted p-4 space-y-2">
-                    <h4 className="font-semibold text-sm">CSV Format Requirements:</h4>
+                    <h4 className="font-semibold text-sm">File Format Requirements:</h4>
                     <ul className="text-xs space-y-1 text-muted-foreground">
+                      <li>• Supported formats: CSV (.csv), Excel (.xlsx, .xls)</li>
                       <li>• Required columns: name, category, department, quantity</li>
                       <li>• Optional columns: model, serial_number, location, low_stock_threshold, specifications</li>
                       <li>• Department values: IT, AIDS, CSE, Physics, Chemistry, Bio-tech</li>
                       <li>• Specifications should be in JSON format if provided</li>
                     </ul>
                     <div className="mt-3 pt-3 border-t">
-                      <p className="text-xs font-semibold mb-1">Example CSV:</p>
+                      <p className="text-xs font-semibold mb-1">Example CSV/Excel format:</p>
                       <pre className="text-xs bg-background p-2 rounded overflow-x-auto">
 name,category,department,quantity,model,location
 Dell Laptop,Computer,IT,5,Latitude 5420,Room 101
@@ -436,7 +465,7 @@ Microscope,Lab Equipment,Bio-tech,3,BM-200,Lab A
                 </div>
 
                 <form onSubmit={handleBulkImport} className="flex gap-4">
-                  <Button type="submit" disabled={loading || !csvFile}>
+                  <Button type="submit" disabled={loading || !importFile}>
                     {loading ? "Importing..." : "Import Items"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => navigate(-1)}>

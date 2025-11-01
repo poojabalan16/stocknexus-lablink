@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +49,7 @@ const formSchema = z.object({
   technician_vendor_name: z.string().min(1).max(200),
   cost: z.string().optional(),
   remarks: z.string().optional(),
+  bill_photo: z.instanceof(File).optional(),
 });
 
 const ServiceDetail = () => {
@@ -56,6 +58,7 @@ const ServiceDetail = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [billPhotoPreview, setBillPhotoPreview] = useState<string | null>(null);
 
   const { data: service, isLoading, refetch } = useQuery({
     queryKey: ["service", id],
@@ -94,18 +97,76 @@ const ServiceDetail = () => {
         cost: service.cost?.toString() || "",
         remarks: service.remarks || "",
       });
+      if (service.bill_photo_url) {
+        setBillPhotoPreview(service.bill_photo_url);
+      }
     }
   }, [service, form]);
+
+  const handleBillPhotoChange = (file: File | null) => {
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "File size must be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      form.setValue("bill_photo", file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBillPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      form.setValue("bill_photo", undefined);
+      if (service?.bill_photo_url) {
+        setBillPhotoPreview(service.bill_photo_url);
+      } else {
+        setBillPhotoPreview(null);
+      }
+    }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
 
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error("Not authenticated");
+
+      let billPhotoUrl = service?.bill_photo_url;
+
+      // Upload new bill photo if provided
+      if (values.bill_photo) {
+        const fileExt = values.bill_photo.name.split('.').pop();
+        const fileName = `${userData.user.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('service-bills')
+          .upload(fileName, values.bill_photo);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('service-bills')
+          .getPublicUrl(fileName);
+        
+        billPhotoUrl = urlData.publicUrl;
+      }
+
       const { error } = await supabase
         .from("services")
         .update({
-          ...values,
+          service_type: values.service_type,
+          nature_of_service: values.nature_of_service,
+          service_date: values.service_date,
+          status: values.status,
+          technician_vendor_name: values.technician_vendor_name,
           cost: values.cost ? parseFloat(values.cost) : null,
+          remarks: values.remarks,
+          bill_photo_url: billPhotoUrl,
         })
         .eq("id", id);
 
@@ -363,6 +424,47 @@ const ServiceDetail = () => {
                     )}
                   />
 
+                  <div className="space-y-2">
+                    <Label htmlFor="bill-photo">Bill Photo / Receipt (Optional)</Label>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <Input
+                          id="bill-photo"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleBillPhotoChange(e.target.files?.[0] || null)}
+                          className="flex-1"
+                        />
+                        {billPhotoPreview && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              handleBillPhotoChange(null);
+                              const input = document.getElementById("bill-photo") as HTMLInputElement;
+                              if (input) input.value = "";
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      {billPhotoPreview && (
+                        <div className="rounded-lg border p-4">
+                          <img
+                            src={billPhotoPreview}
+                            alt="Bill preview"
+                            className="max-h-64 mx-auto rounded-lg"
+                          />
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Upload a photo of the service bill or receipt (Max 5MB)
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="flex gap-4">
                     <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting ? "Saving..." : "Save Changes"}
@@ -454,6 +556,24 @@ const ServiceDetail = () => {
                 </CardHeader>
                 <CardContent>
                   <p>{service.remarks}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {service.bill_photo_url && (
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Bill / Receipt</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-lg border p-4">
+                    <img
+                      src={service.bill_photo_url}
+                      alt="Service bill"
+                      className="max-h-96 mx-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(service.bill_photo_url!, '_blank')}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             )}

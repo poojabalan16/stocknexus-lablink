@@ -44,12 +44,14 @@ const formSchema = z.object({
   technician_vendor_name: z.string().min(1, "Technician/Vendor name is required").max(200),
   cost: z.string().optional(),
   remarks: z.string().optional(),
+  bill_photo: z.instanceof(File).optional(),
 });
 
 const AddService = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [billPhotoPreview, setBillPhotoPreview] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -78,11 +80,54 @@ const AddService = () => {
     (item) => item.department === selectedDepartment
   );
 
+  const handleBillPhotoChange = (file: File | null) => {
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "File size must be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      form.setValue("bill_photo", file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBillPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      form.setValue("bill_photo", undefined);
+      setBillPhotoPreview(null);
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
 
     try {
       const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error("Not authenticated");
+
+      let billPhotoUrl = null;
+
+      // Upload bill photo if provided
+      if (values.bill_photo) {
+        const fileExt = values.bill_photo.name.split('.').pop();
+        const fileName = `${userData.user.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('service-bills')
+          .upload(fileName, values.bill_photo);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('service-bills')
+          .getPublicUrl(fileName);
+        
+        billPhotoUrl = urlData.publicUrl;
+      }
 
       const serviceData = {
         service_type: values.service_type,
@@ -94,7 +139,8 @@ const AddService = () => {
         technician_vendor_name: values.technician_vendor_name,
         cost: values.cost ? parseFloat(values.cost) : null,
         remarks: values.remarks,
-        created_by: userData?.user?.id,
+        bill_photo_url: billPhotoUrl,
+        created_by: userData.user.id,
       };
 
       const { error } = await supabase.from("services").insert([serviceData]);
@@ -329,6 +375,47 @@ const AddService = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="space-y-2">
+                  <Label htmlFor="bill-photo">Bill Photo / Receipt (Optional)</Label>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        id="bill-photo"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleBillPhotoChange(e.target.files?.[0] || null)}
+                        className="flex-1"
+                      />
+                      {billPhotoPreview && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            handleBillPhotoChange(null);
+                            const input = document.getElementById("bill-photo") as HTMLInputElement;
+                            if (input) input.value = "";
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    {billPhotoPreview && (
+                      <div className="rounded-lg border p-4">
+                        <img
+                          src={billPhotoPreview}
+                          alt="Bill preview"
+                          className="max-h-64 mx-auto rounded-lg"
+                        />
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Upload a photo of the service bill or receipt (Max 5MB)
+                    </p>
+                  </div>
+                </div>
 
                 <div className="flex gap-4">
                   <Button type="submit" disabled={isSubmitting}>

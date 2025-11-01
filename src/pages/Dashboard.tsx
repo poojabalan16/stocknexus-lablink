@@ -6,7 +6,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DepartmentOverview } from "@/components/dashboard/DepartmentOverview";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
-import { InventoryChart } from "@/components/dashboard/InventoryChart";
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -66,10 +66,7 @@ const Dashboard = () => {
 
         <DashboardStats />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <InventoryChart />
-          <RecentAlerts />
-        </div>
+        <RecentAlerts />
 
         <DepartmentOverview />
       </div>
