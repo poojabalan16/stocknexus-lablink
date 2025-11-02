@@ -62,7 +62,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const userId = userData.user.id;
 
-    // Insert profile
+    // Insert profile with approved status
     console.log('Attempting to insert profile for user:', userId);
     const { error: profileError } = await supabaseClient
       .from("profiles")
@@ -71,6 +71,7 @@ const handler = async (req: Request): Promise<Response> => {
         email,
         full_name: fullName,
         department,
+        approved: true,
       });
 
     if (profileError) {
