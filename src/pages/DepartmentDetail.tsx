@@ -20,6 +20,15 @@ interface InventoryItem {
   location: string;
   status: string;
   low_stock_threshold: number;
+  unit_price: number;
+}
+
+interface ItemSummary {
+  name: string;
+  totalQuantity: number;
+  totalAmount: number;
+  items: InventoryItem[];
+  lowStockThreshold: number;
 }
 
 const DepartmentDetail = () => {
@@ -31,6 +40,7 @@ const DepartmentDetail = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userDepartment, setUserDepartment] = useState<string | null>(null);
+  const [itemSummaries, setItemSummaries] = useState<ItemSummary[]>([]);
 
   useEffect(() => {
     checkAuth();
@@ -50,6 +60,26 @@ const DepartmentDetail = () => {
     } else {
       setFilteredItems(items);
     }
+    
+    // Calculate summaries grouped by item name
+    const summaryMap = new Map<string, ItemSummary>();
+    items.forEach(item => {
+      const existing = summaryMap.get(item.name);
+      if (existing) {
+        existing.totalQuantity += item.quantity;
+        existing.totalAmount += item.quantity * (item.unit_price || 0);
+        existing.items.push(item);
+      } else {
+        summaryMap.set(item.name, {
+          name: item.name,
+          totalQuantity: item.quantity,
+          totalAmount: item.quantity * (item.unit_price || 0),
+          items: [item],
+          lowStockThreshold: item.low_stock_threshold,
+        });
+      }
+    });
+    setItemSummaries(Array.from(summaryMap.values()));
   }, [searchQuery, items]);
 
   const checkAuth = async () => {
@@ -95,14 +125,23 @@ const DepartmentDetail = () => {
     return userRole === "admin" || (userRole === "hod" && userDepartment === department);
   };
 
-  const getStatusBadge = (item: InventoryItem) => {
-    if (item.quantity === 0) {
+  const getStatusBadge = (summary: ItemSummary) => {
+    if (summary.totalQuantity === 0) {
       return <Badge variant="destructive">Out of Stock</Badge>;
-    } else if (item.quantity <= item.low_stock_threshold) {
+    } else if (summary.totalQuantity <= summary.lowStockThreshold) {
       return <Badge variant="outline" className="border-alert text-alert">Low Stock</Badge>;
     } else {
       return <Badge variant="default" className="bg-success">In Stock</Badge>;
     }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
   };
 
   return (
@@ -141,52 +180,111 @@ const DepartmentDetail = () => {
                 />
               </div>
 
+              {/* Summary Statistics */}
+              {itemSummaries.length > 0 && (
+                <div className="grid gap-4 md:grid-cols-3 mb-6">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {itemSummaries.reduce((sum, s) => sum + s.totalQuantity, 0)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {formatCurrency(itemSummaries.reduce((sum, s) => sum + s.totalAmount, 0))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Item Types</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{itemSummaries.length}</div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
               {loading ? (
                 <p className="text-center py-8 text-muted-foreground">Loading...</p>
-              ) : filteredItems.length === 0 ? (
+              ) : itemSummaries.length === 0 ? (
                 <p className="text-center py-8 text-muted-foreground">
                   {searchQuery ? "No items found matching your search" : "No items in this department"}
                 </p>
               ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Model</TableHead>
-                        <TableHead>Serial Number</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.model || "N/A"}</TableCell>
-                          <TableCell className="font-mono text-sm">{item.serial_number || "N/A"}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell>{item.location || "N/A"}</TableCell>
-                          <TableCell>{getStatusBadge(item)}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => navigate(`/inventory/${item.id}`)}
-                              >
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="space-y-6">
+                  {itemSummaries.map((summary) => (
+                    <div key={summary.name} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-lg font-semibold">{summary.name}</h3>
+                          {getStatusBadge(summary)}
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-muted-foreground">Total Quantity</div>
+                          <div className="text-xl font-bold">{summary.totalQuantity}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-muted-foreground">Total Value</div>
+                          <div className="text-xl font-bold text-primary">
+                            {formatCurrency(summary.totalAmount)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Serial Number</TableHead>
+                              <TableHead>Model</TableHead>
+                              <TableHead>Category</TableHead>
+                              <TableHead>Qty</TableHead>
+                              <TableHead>Unit Price</TableHead>
+                              <TableHead>Amount</TableHead>
+                              <TableHead>Location</TableHead>
+                              <TableHead>Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {summary.items.map((item) => (
+                              <TableRow key={item.id}>
+                                <TableCell className="font-mono text-sm">
+                                  {item.serial_number || "-"}
+                                </TableCell>
+                                <TableCell>{item.model || "-"}</TableCell>
+                                <TableCell>{item.category}</TableCell>
+                                <TableCell>{item.quantity}</TableCell>
+                                <TableCell>{formatCurrency(item.unit_price || 0)}</TableCell>
+                                <TableCell className="font-semibold">
+                                  {formatCurrency(item.quantity * (item.unit_price || 0))}
+                                </TableCell>
+                                <TableCell>{item.location || "-"}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate(`/items/${item.id}`)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
