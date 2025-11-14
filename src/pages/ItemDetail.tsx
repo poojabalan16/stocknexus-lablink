@@ -45,6 +45,7 @@ const ItemDetail = () => {
   const [lowStockThreshold, setLowStockThreshold] = useState("");
   const [location, setLocation] = useState("");
   const [specifications, setSpecifications] = useState("");
+  const [unitPrice, setUnitPrice] = useState("");
 
   useEffect(() => {
     checkAuth();
@@ -91,6 +92,7 @@ const ItemDetail = () => {
       setLowStockThreshold(data.low_stock_threshold.toString());
       setLocation(data.location || "");
       setSpecifications(JSON.stringify(data.specifications || {}, null, 2));
+      setUnitPrice(data.unit_price?.toString() || "0");
     } catch (error: any) {
       toast.error("Failed to load item details");
       navigate("/dashboard");
@@ -131,6 +133,7 @@ const ItemDetail = () => {
           low_stock_threshold: parseInt(lowStockThreshold),
           location: location || null,
           specifications: specsObj,
+          unit_price: unitPrice ? parseFloat(unitPrice) : 0,
         })
         .eq("id", item.id);
 
@@ -267,6 +270,18 @@ const ItemDetail = () => {
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
+                    disabled={!canEdit()}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="unitPrice">Unit Price (₹)</Label>
+                  <Input
+                    id="unitPrice"
+                    type="number"
+                    step="0.01"
+                    value={unitPrice}
+                    onChange={(e) => setUnitPrice(e.target.value)}
                     disabled={!canEdit()}
                   />
                 </div>

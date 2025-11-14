@@ -29,6 +29,7 @@ const AddItem = () => {
   const [location, setLocation] = useState("");
   const [department, setDepartment] = useState("");
   const [specifications, setSpecifications] = useState("");
+  const [unitPrice, setUnitPrice] = useState("");
 
   // Bulk import state
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -99,6 +100,7 @@ const AddItem = () => {
           specifications: specsObj,
           created_by: user.id,
           status: "available",
+          unit_price: unitPrice ? parseFloat(unitPrice) : 0,
         });
 
       if (error) throw error;
@@ -211,6 +213,7 @@ const AddItem = () => {
           serial_number: normalizedRow.serial_number || normalizedRow.serialnumber || null,
           low_stock_threshold: parseInt(normalizedRow.low_stock_threshold || normalizedRow.lowstockthreshold || normalizedRow.threshold) || 5,
           location: normalizedRow.location || null,
+          unit_price: parseFloat(normalizedRow.unit_price || normalizedRow.unitprice || normalizedRow.price) || 0,
         };
 
         // Handle specifications
