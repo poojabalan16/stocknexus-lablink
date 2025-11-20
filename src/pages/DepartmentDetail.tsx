@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Search, Package, Edit, Trash2 } from "lucide-react";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
+import { StatsGridSkeleton } from "@/components/skeletons/StatsCardSkeleton";
 
 interface InventoryItem {
   id: string;
@@ -144,9 +146,33 @@ const DepartmentDetail = () => {
     }).format(amount);
   };
 
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">{department} Department</h1>
+              <p className="text-muted-foreground mt-1">Loading inventory items...</p>
+            </div>
+          </div>
+          <StatsGridSkeleton />
+          <Card>
+            <CardHeader>
+              <CardTitle>Inventory Items</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TableSkeleton rows={8} columns={6} />
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold">{department} Department</h1>
