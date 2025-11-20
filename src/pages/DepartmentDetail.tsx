@@ -20,7 +20,7 @@ interface InventoryItem {
   location: string;
   status: string;
   low_stock_threshold: number;
-  unit_price: number;
+  unit_price?: number | null;
 }
 
 interface ItemSummary {

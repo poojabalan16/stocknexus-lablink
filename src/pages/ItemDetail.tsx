@@ -25,6 +25,7 @@ interface InventoryItem {
   low_stock_threshold: number;
   specifications: any;
   created_at: string;
+  unit_price?: number | null;
 }
 
 const ItemDetail = () => {
@@ -92,7 +93,7 @@ const ItemDetail = () => {
       setLowStockThreshold(data.low_stock_threshold.toString());
       setLocation(data.location || "");
       setSpecifications(JSON.stringify(data.specifications || {}, null, 2));
-      setUnitPrice(data.unit_price?.toString() || "0");
+      setUnitPrice((data as any).unit_price?.toString() || "0");
     } catch (error: any) {
       toast.error("Failed to load item details");
       navigate("/dashboard");
