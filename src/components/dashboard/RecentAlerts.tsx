@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle } from "lucide-react";
+import { AlertListSkeleton } from "@/components/skeletons/AlertListSkeleton";
 
 interface Alert {
   id: string;
@@ -12,10 +13,12 @@ interface Alert {
 }
 
 export function RecentAlerts() {
+  const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
     const fetchAlerts = async () => {
+      setLoading(true);
       const { data } = await supabase
         .from("alerts")
         .select("*")
@@ -24,6 +27,7 @@ export function RecentAlerts() {
         .limit(5);
 
       if (data) setAlerts(data);
+      setLoading(false);
     };
 
     fetchAlerts();
@@ -38,8 +42,12 @@ export function RecentAlerts() {
     }
   };
 
+  if (loading) {
+    return <AlertListSkeleton />;
+  }
+
   return (
-    <Card>
+    <Card className="animate-fade-in hover-lift">
       <CardHeader>
         <CardTitle>Recent Alerts</CardTitle>
         <CardDescription>Unresolved inventory alerts</CardDescription>
@@ -50,7 +58,7 @@ export function RecentAlerts() {
             <p className="text-sm text-muted-foreground">No active alerts</p>
           ) : (
             alerts.map((alert) => (
-              <div key={alert.id} className="flex items-start gap-3 p-3 rounded-lg border">
+              <div key={alert.id} className="flex items-start gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
                 <AlertCircle className="h-4 w-4 text-warning mt-0.5" />
                 <div className="flex-1 space-y-1">
                   <p className="text-sm">{alert.message}</p>

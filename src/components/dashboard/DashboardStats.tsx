@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, AlertTriangle, TrendingUp, Database } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { StatsGridSkeleton } from "@/components/skeletons/StatsCardSkeleton";
 
 export function DashboardStats() {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalItems: 0,
     lowStockItems: 0,
@@ -13,6 +15,7 @@ export function DashboardStats() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      setLoading(true);
       const [itemsResult, alertsResult] = await Promise.all([
         supabase.from("inventory_items").select("id, quantity, low_stock_threshold"),
         supabase.from("alerts").select("id").eq("is_resolved", false),
@@ -30,6 +33,7 @@ export function DashboardStats() {
         totalDepartments: 6,
         activeAlerts,
       });
+      setLoading(false);
     };
 
     fetchStats();
@@ -62,10 +66,14 @@ export function DashboardStats() {
     },
   ];
 
+  if (loading) {
+    return <StatsGridSkeleton />;
+  }
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-fade-in">
       {statCards.map((stat) => (
-        <Card key={stat.title}>
+        <Card key={stat.title} className="hover-lift">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
             <stat.icon className={`h-4 w-4 ${stat.color}`} />

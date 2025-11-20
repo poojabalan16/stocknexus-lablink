@@ -24,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { StatsGridSkeleton } from "@/components/skeletons/StatsCardSkeleton";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 const Services = () => {
   const navigate = useNavigate();
@@ -122,43 +124,47 @@ const Services = () => {
         </div>
 
         {/* Analytics Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Services</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.total}</div>
-            </CardContent>
-          </Card>
+        {isLoading ? (
+          <StatsGridSkeleton />
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-fade-in">
+            <Card className="hover-lift">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Services</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analytics.total}</div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Internal Services</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.internal}</div>
-            </CardContent>
-          </Card>
+            <Card className="hover-lift">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Internal Services</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analytics.internal}</div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">External Services</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.external}</div>
-            </CardContent>
-          </Card>
+            <Card className="hover-lift">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">External Services</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analytics.external}</div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.completed}</div>
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="hover-lift">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Completed</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analytics.completed}</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Filters */}
         <Card>
@@ -196,7 +202,7 @@ const Services = () => {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">Loading services...</div>
+              <TableSkeleton rows={5} columns={8} />
             ) : services && services.length > 0 ? (
               <div className="rounded-md border">
                 <Table>

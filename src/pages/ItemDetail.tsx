@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, ArrowLeft, Save, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ItemDetailSkeleton } from "@/components/skeletons/ItemDetailSkeleton";
 
 interface InventoryItem {
   id: string;
@@ -181,7 +182,7 @@ const ItemDetail = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <p className="text-center py-8 text-muted-foreground">Loading...</p>
+        <ItemDetailSkeleton />
       </DashboardLayout>
     );
   }
@@ -196,7 +197,7 @@ const ItemDetail = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-3xl">
+      <div className="space-y-6 max-w-3xl animate-fade-in">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate(`/departments/${item.department}`)}>
