@@ -38,7 +38,7 @@ const mainMenuItems = [
 
 const departmentItems = [
   { title: "IT Department", url: "/departments/IT", icon: Cpu, dept: "IT" },
-  { title: "AIDS Department", url: "/departments/AIDS", icon: Network, dept: "AIDS" },
+  { title: "AI&DS Department", url: "/departments/AI&DS", icon: Network, dept: "AI&DS" },
   { title: "CSE Department", url: "/departments/CSE", icon: Database, dept: "CSE" },
   { title: "Physics Department", url: "/departments/Physics", icon: Microscope, dept: "Physics" },
   { title: "Chemistry Department", url: "/departments/Chemistry", icon: FlaskConical, dept: "Chemistry" },

@@ -328,7 +328,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "hod" | "staff"
-      department: "IT" | "AIDS" | "CSE" | "Physics" | "Chemistry" | "Bio-tech"
+      department: "IT" | "AI&DS" | "CSE" | "Physics" | "Chemistry" | "Bio-tech"
       nature_of_service:
         | "maintenance"
         | "repair"
@@ -464,7 +464,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "hod", "staff"],
-      department: ["IT", "AIDS", "CSE", "Physics", "Chemistry", "Bio-tech"],
+      department: ["IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech"],
       nature_of_service: [
         "maintenance",
         "repair",

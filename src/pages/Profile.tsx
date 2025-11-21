@@ -113,13 +113,21 @@ const Profile = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-2xl">
-        <div>
-          <h1 className="text-3xl font-bold">Profile</h1>
-          <p className="text-muted-foreground">Manage your account settings</p>
+      <div className="space-y-8 max-w-3xl mx-auto">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-background p-8 border border-primary/20">
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold flex items-center gap-3">
+              <UserCircle className="h-10 w-10 text-primary" />
+              Profile
+            </h1>
+            <p className="text-muted-foreground mt-2 text-lg">
+              Manage your account settings
+            </p>
+          </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-0" />
         </div>
 
-        <Card>
+        <Card className="border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserCircle className="h-5 w-5" />
@@ -173,7 +181,7 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-primary/20">
           <CardHeader>
             <CardTitle>Change Password</CardTitle>
             <CardDescription>Update your account password</CardDescription>

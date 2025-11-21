@@ -7,7 +7,7 @@ import { Cpu, Network, Database, Microscope, FlaskConical, Dna } from "lucide-re
 
 const departmentIcons: Record<string, any> = {
   IT: Cpu,
-  AIDS: Network,
+  "AI&DS": Network,
   CSE: Database,
   Physics: Microscope,
   Chemistry: FlaskConical,

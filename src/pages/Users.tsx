@@ -169,13 +169,21 @@ const Users = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Review and manage user registration requests</p>
+      <div className="space-y-8">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-background p-8 border border-primary/20">
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold flex items-center gap-3">
+              <User className="h-10 w-10 text-primary" />
+              User Management
+            </h1>
+            <p className="text-muted-foreground mt-2 text-lg">
+              Review and manage user registration requests
+            </p>
+          </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-0" />
         </div>
 
-        <Card>
+        <Card className="border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />

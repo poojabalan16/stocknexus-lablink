@@ -379,7 +379,7 @@ const AddItem = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="IT">IT</SelectItem>
-                          <SelectItem value="AIDS">AIDS</SelectItem>
+                          <SelectItem value="AI&DS">AI&DS</SelectItem>
                           <SelectItem value="CSE">CSE</SelectItem>
                           <SelectItem value="Physics">Physics</SelectItem>
                           <SelectItem value="Chemistry">Chemistry</SelectItem>
@@ -453,7 +453,7 @@ const AddItem = () => {
                       <li>• Supported formats: CSV (.csv), Excel (.xlsx, .xls)</li>
                       <li>• Required columns: name, category, department, quantity</li>
                       <li>• Optional columns: model, serial_number, location, low_stock_threshold, specifications</li>
-                      <li>• Department values: IT, AIDS, CSE, Physics, Chemistry, Bio-tech</li>
+                      <li>• Department values: IT, AI&DS, CSE, Physics, Chemistry, Bio-tech</li>
                       <li>• Specifications should be in JSON format if provided</li>
                     </ul>
                     <div className="mt-3 pt-3 border-t">
