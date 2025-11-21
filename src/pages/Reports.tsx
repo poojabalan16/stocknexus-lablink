@@ -252,13 +252,21 @@ const Reports = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-2xl">
-        <div>
-          <h1 className="text-3xl font-bold">Reports</h1>
-          <p className="text-muted-foreground">Generate and download inventory reports</p>
+      <div className="space-y-8 max-w-3xl mx-auto">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-accent/10 via-accent/5 to-background p-8 border border-accent/20">
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold flex items-center gap-3">
+              <FileText className="h-10 w-10 text-accent" />
+              Reports
+            </h1>
+            <p className="text-muted-foreground mt-2 text-lg">
+              Generate and download inventory reports
+            </p>
+          </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl -z-0" />
         </div>
 
-        <Card>
+        <Card className="border-accent/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -291,7 +299,7 @@ const Reports = () => {
                     <SelectContent>
                       <SelectItem value="all">All Departments</SelectItem>
                       <SelectItem value="IT">IT</SelectItem>
-                      <SelectItem value="AIDS">AIDS</SelectItem>
+                      <SelectItem value="AI&DS">AI&DS</SelectItem>
                       <SelectItem value="CSE">CSE</SelectItem>
                       <SelectItem value="Physics">Physics</SelectItem>
                       <SelectItem value="Chemistry">Chemistry</SelectItem>

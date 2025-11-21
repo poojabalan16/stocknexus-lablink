@@ -223,7 +223,7 @@ const AddService = () => {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="IT">IT</SelectItem>
-                            <SelectItem value="AIDS">AIDS</SelectItem>
+                            <SelectItem value="AI&DS">AI&DS</SelectItem>
                             <SelectItem value="CSE">CSE</SelectItem>
                             <SelectItem value="Physics">Physics</SelectItem>
                             <SelectItem value="Chemistry">Chemistry</SelectItem>

@@ -134,77 +134,86 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Shield className="h-8 w-8" />
-              Admin Dashboard
-            </h1>
-            <p className="text-muted-foreground">Complete system overview and management</p>
+      <div className="space-y-8">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary-glow to-background p-8 border border-primary/30 shadow-glow">
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold flex items-center gap-3 text-primary-foreground">
+                <Shield className="h-10 w-10" />
+                Admin Dashboard
+              </h1>
+              <p className="text-primary-foreground/80 mt-2 text-lg">
+                Complete system overview and management
+              </p>
+            </div>
+            <Button onClick={() => navigate("/users")} size="lg" variant="secondary">
+              <Users className="h-4 w-4 mr-2" />
+              Manage Users
+            </Button>
           </div>
-          <Button onClick={() => navigate("/users")}>
-            <Users className="h-4 w-4 mr-2" />
-            Manage Users
-          </Button>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary-glow/30 rounded-full blur-3xl -z-0" />
         </div>
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <Card>
+          <Card className="hover-lift border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                {stats.totalUsers}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
                 {stats.pendingRequests} pending requests
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover-lift border-accent/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Items</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
+              <Package className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalItems}</div>
-              <p className="text-xs text-muted-foreground">Across all departments</p>
+              <div className="text-3xl font-bold bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">
+                {stats.totalItems}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Across all departments</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover-lift border-destructive/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
               <AlertTriangle className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-destructive">{stats.lowStockItems}</div>
-              <p className="text-xs text-muted-foreground">Items need restocking</p>
+              <div className="text-3xl font-bold text-destructive">{stats.lowStockItems}</div>
+              <p className="text-xs text-muted-foreground mt-1">Items need restocking</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover-lift border-alert/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              <AlertTriangle className="h-4 w-4 text-alert" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.activeAlerts}</div>
-              <p className="text-xs text-muted-foreground">Unresolved issues</p>
+              <div className="text-3xl font-bold text-alert">{stats.activeAlerts}</div>
+              <p className="text-xs text-muted-foreground mt-1">Unresolved issues</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover-lift border-secondary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-4 w-4 text-secondary-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.pendingRequests}</div>
-              <p className="text-xs text-muted-foreground">Need approval</p>
+              <div className="text-3xl font-bold">{stats.pendingRequests}</div>
+              <p className="text-xs text-muted-foreground mt-1">Need approval</p>
             </CardContent>
           </Card>
         </div>

@@ -122,13 +122,21 @@ const Alerts = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Alerts & Notifications</h1>
-          <p className="text-muted-foreground">Monitor and manage inventory alerts</p>
+      <div className="space-y-8">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-destructive/10 via-destructive/5 to-background p-8 border border-destructive/20">
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold flex items-center gap-3">
+              <Bell className="h-10 w-10 text-destructive" />
+              Alerts & Notifications
+            </h1>
+            <p className="text-muted-foreground mt-2 text-lg">
+              Monitor and manage inventory alerts
+            </p>
+          </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-destructive/10 rounded-full blur-3xl -z-0" />
         </div>
 
-        <Card>
+        <Card className="border-destructive/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
