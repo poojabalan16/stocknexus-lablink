@@ -22,13 +22,11 @@ interface InventoryItem {
   location: string;
   status: string;
   low_stock_threshold: number;
-  unit_price?: number | null;
 }
 
 interface ItemSummary {
   name: string;
   totalQuantity: number;
-  totalAmount: number;
   items: InventoryItem[];
   lowStockThreshold: number;
 }
@@ -69,13 +67,11 @@ const DepartmentDetail = () => {
       const existing = summaryMap.get(item.name);
       if (existing) {
         existing.totalQuantity += item.quantity;
-        existing.totalAmount += item.quantity * (item.unit_price || 0);
         existing.items.push(item);
       } else {
         summaryMap.set(item.name, {
           name: item.name,
           totalQuantity: item.quantity,
-          totalAmount: item.quantity * (item.unit_price || 0),
           items: [item],
           lowStockThreshold: item.low_stock_threshold,
         });
@@ -135,15 +131,6 @@ const DepartmentDetail = () => {
     } else {
       return <Badge variant="default" className="bg-success">In Stock</Badge>;
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
   };
 
   if (loading) {
@@ -208,7 +195,7 @@ const DepartmentDetail = () => {
 
               {/* Summary Statistics */}
               {itemSummaries.length > 0 && (
-                <div className="grid gap-4 md:grid-cols-3 mb-6">
+                <div className="grid gap-4 md:grid-cols-2 mb-6">
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium">Total Items</CardTitle>
@@ -216,16 +203,6 @@ const DepartmentDetail = () => {
                     <CardContent>
                       <div className="text-2xl font-bold">
                         {itemSummaries.reduce((sum, s) => sum + s.totalQuantity, 0)}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {formatCurrency(itemSummaries.reduce((sum, s) => sum + s.totalAmount, 0))}
                       </div>
                     </CardContent>
                   </Card>
@@ -259,12 +236,6 @@ const DepartmentDetail = () => {
                           <div className="text-sm text-muted-foreground">Total Quantity</div>
                           <div className="text-xl font-bold">{summary.totalQuantity}</div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm text-muted-foreground">Total Value</div>
-                          <div className="text-xl font-bold text-primary">
-                            {formatCurrency(summary.totalAmount)}
-                          </div>
-                        </div>
                       </div>
                       
                       <div className="rounded-md border">
@@ -275,9 +246,11 @@ const DepartmentDetail = () => {
                               <TableHead>Model</TableHead>
                               <TableHead>Category</TableHead>
                               <TableHead>Qty</TableHead>
-                              <TableHead>Unit Price</TableHead>
-                              <TableHead>Amount</TableHead>
-                              <TableHead>Location</TableHead>
+                              <TableHead>
+                                {department === "IT" || department === "AI&DS" || department === "CSE"
+                                  ? "Cabin Number"
+                                  : "Location"}
+                              </TableHead>
                               <TableHead>Actions</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -290,16 +263,12 @@ const DepartmentDetail = () => {
                                 <TableCell>{item.model || "-"}</TableCell>
                                 <TableCell>{item.category}</TableCell>
                                 <TableCell>{item.quantity}</TableCell>
-                                <TableCell>{formatCurrency(item.unit_price || 0)}</TableCell>
-                                <TableCell className="font-semibold">
-                                  {formatCurrency(item.quantity * (item.unit_price || 0))}
-                                </TableCell>
                                 <TableCell>{item.location || "-"}</TableCell>
                                 <TableCell>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => navigate(`/items/${item.id}`)}
+                                    onClick={() => navigate(`/inventory/${item.id}`)}
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>
