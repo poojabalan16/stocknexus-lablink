@@ -54,17 +54,17 @@ const Reports = () => {
       }
 
       const fileName = `inventory-report-${department}-${new Date().toISOString().split('T')[0]}`;
-      const headers = ["Name", "Category", "Model", "Serial Number", "Quantity", "Location", "Department", "Status"];
+      const headers = ["Name", "Model", "Serial Number", "Quantity", "Cabin Number", "Location", "Department", "Status"];
       
       if (format === "csv") {
         const csvContent = [
           headers.join(","),
           ...data.map(item => [
             `"${item.name}"`,
-            `"${item.category}"`,
             `"${item.model || ""}"`,
             `"${item.serial_number || ""}"`,
             item.quantity,
+            `"${item.cabin_number || ""}"`,
             `"${item.location || ""}"`,
             `"${item.department}"`,
             `"${item.status}"`,
@@ -83,10 +83,10 @@ const Reports = () => {
           headers,
           ...data.map(item => [
             item.name,
-            item.category,
             item.model || "",
             item.serial_number || "",
             item.quantity,
+            item.cabin_number || "",
             item.location || "",
             item.department,
             item.status,
@@ -117,10 +117,10 @@ const Reports = () => {
           head: [headers],
           body: data.map(item => [
             item.name,
-            item.category,
             item.model || "",
             item.serial_number || "",
             item.quantity,
+            item.cabin_number || "",
             item.location || "",
             item.department,
             item.status,

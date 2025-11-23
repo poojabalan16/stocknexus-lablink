@@ -21,7 +21,6 @@ const AddItem = () => {
 
   // Form state
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
   const [model, setModel] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -90,7 +89,6 @@ const AddItem = () => {
         .from("inventory_items")
         .insert({
           name,
-          category,
           model: model || null,
           serial_number: serialNumber || null,
           quantity: parseInt(quantity),
@@ -184,7 +182,7 @@ const AddItem = () => {
       }
 
       // Validate required fields
-      const requiredFields = ["name", "category", "department", "quantity"];
+      const requiredFields = ["name", "department", "quantity"];
       const firstRow = parsedData[0];
       const availableFields = Object.keys(firstRow).map(k => k.toLowerCase());
       const missingFields = requiredFields.filter(field => !availableFields.includes(field));
@@ -206,7 +204,6 @@ const AddItem = () => {
           created_by: user.id,
           status: "available",
           name: normalizedRow.name,
-          category: normalizedRow.category,
           department: normalizedRow.department,
           quantity: parseInt(normalizedRow.quantity) || 1,
           model: normalizedRow.model || null,
@@ -229,7 +226,7 @@ const AddItem = () => {
         }
 
         return item;
-      }).filter((item: any) => item.name && item.category && item.department);
+      }).filter((item: any) => item.name && item.department);
 
       if (items.length === 0) {
         toast.error("No valid items found in file");
@@ -290,24 +287,13 @@ const AddItem = () => {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 col-span-2">
                       <Label htmlFor="name">Item Name *</Label>
                       <Input
                         id="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Dell Laptop"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category *</Label>
-                      <Input
-                        id="category"
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        placeholder="Computer"
                         required
                       />
                     </div>
@@ -463,8 +449,8 @@ const AddItem = () => {
                     <h4 className="font-semibold text-sm">File Format Requirements:</h4>
                     <ul className="text-xs space-y-1 text-muted-foreground">
                       <li>• Supported formats: CSV (.csv), Excel (.xlsx, .xls)</li>
-                      <li>• Required columns: name, category, department, quantity</li>
-                      <li>• Optional columns: model, serial_number, location, low_stock_threshold, specifications</li>
+                      <li>• Required columns: name, department, quantity</li>
+                      <li>• Optional columns: model, serial_number, location, cabin_number, low_stock_threshold, specifications</li>
                       <li>• Department values: IT, AI&DS, CSE, Physics, Chemistry, Bio-tech</li>
                       <li>• Specifications should be in JSON format if provided</li>
                     </ul>

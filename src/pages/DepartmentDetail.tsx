@@ -245,7 +245,6 @@ const DepartmentDetail = () => {
                             <TableRow>
                               <TableHead>Serial Number</TableHead>
                               <TableHead>Model</TableHead>
-                              <TableHead>Category</TableHead>
                               <TableHead>Qty</TableHead>
                               {(department === "IT" || department === "AI&DS" || department === "CSE") && (
                                 <TableHead>Cabin Number</TableHead>
@@ -261,7 +260,6 @@ const DepartmentDetail = () => {
                                   {item.serial_number || "-"}
                                 </TableCell>
                                 <TableCell>{item.model || "-"}</TableCell>
-                                <TableCell>{item.category}</TableCell>
                                 <TableCell>{item.quantity}</TableCell>
                                 {(department === "IT" || department === "AI&DS" || department === "CSE") && (
                                   <TableCell>{item.cabin_number || "-"}</TableCell>
