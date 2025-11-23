@@ -40,7 +40,6 @@ const ItemDetail = () => {
 
   // Form state
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
   const [model, setModel] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -87,7 +86,6 @@ const ItemDetail = () => {
       
       setItem(data);
       setName(data.name);
-      setCategory(data.category);
       setModel(data.model || "");
       setSerialNumber(data.serial_number || "");
       setQuantity(data.quantity.toString());
@@ -128,7 +126,6 @@ const ItemDetail = () => {
         .from("inventory_items")
         .update({
           name,
-          category,
           model: model || null,
           serial_number: serialNumber || null,
           quantity: parseInt(quantity),
@@ -222,24 +219,14 @@ const ItemDetail = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
+              <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div className="space-y-2 col-span-2">
                   <Label htmlFor="name">Item Name</Label>
                   <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    disabled={!canEdit()}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
                     disabled={!canEdit()}
                   />
                 </div>

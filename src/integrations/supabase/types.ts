@@ -94,7 +94,7 @@ export type Database = {
       inventory_items: {
         Row: {
           cabin_number: string | null
-          category: string
+          category: string | null
           created_at: string
           created_by: string | null
           department: Database["public"]["Enums"]["department"]
@@ -113,7 +113,7 @@ export type Database = {
         }
         Insert: {
           cabin_number?: string | null
-          category: string
+          category?: string | null
           created_at?: string
           created_by?: string | null
           department: Database["public"]["Enums"]["department"]
@@ -132,7 +132,7 @@ export type Database = {
         }
         Update: {
           cabin_number?: string | null
-          category?: string
+          category?: string | null
           created_at?: string
           created_by?: string | null
           department?: Database["public"]["Enums"]["department"]
