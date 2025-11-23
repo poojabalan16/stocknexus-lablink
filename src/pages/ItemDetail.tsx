@@ -46,6 +46,7 @@ const ItemDetail = () => {
   const [quantity, setQuantity] = useState("");
   const [lowStockThreshold, setLowStockThreshold] = useState("");
   const [location, setLocation] = useState("");
+  const [cabinNumber, setCabinNumber] = useState("");
   const [specifications, setSpecifications] = useState("");
 
   useEffect(() => {
@@ -92,6 +93,7 @@ const ItemDetail = () => {
       setQuantity(data.quantity.toString());
       setLowStockThreshold(data.low_stock_threshold.toString());
       setLocation(data.location || "");
+      setCabinNumber(data.cabin_number || "");
       setSpecifications(JSON.stringify(data.specifications || {}, null, 2));
     } catch (error: any) {
       toast.error("Failed to load item details");
@@ -132,6 +134,7 @@ const ItemDetail = () => {
           quantity: parseInt(quantity),
           low_stock_threshold: parseInt(lowStockThreshold),
           location: location || null,
+          cabin_number: cabinNumber || null,
           specifications: specsObj,
         })
         .eq("id", item.id);
@@ -284,21 +287,26 @@ const ItemDetail = () => {
                   />
                 </div>
 
+                {(item?.department === "IT" || item?.department === "AI&DS" || item?.department === "CSE") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="cabin">Cabin Number</Label>
+                    <Input
+                      id="cabin"
+                      value={cabinNumber}
+                      onChange={(e) => setCabinNumber(e.target.value)}
+                      placeholder="e.g., Cabin 101"
+                      disabled={!canEdit()}
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-2 col-span-2">
-                  <Label htmlFor="location">
-                    {item?.department === "IT" || item?.department === "AI&DS" || item?.department === "CSE"
-                      ? "Cabin Number"
-                      : "Location"}
-                  </Label>
+                  <Label htmlFor="location">Location</Label>
                   <Input
                     id="location"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    placeholder={
-                      item?.department === "IT" || item?.department === "AI&DS" || item?.department === "CSE"
-                        ? "e.g., Cabin 101"
-                        : "Room 101, Lab A"
-                    }
+                    placeholder="Room 101, Lab A"
                     disabled={!canEdit()}
                   />
                 </div>
