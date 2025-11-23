@@ -93,6 +93,7 @@ export type Database = {
       }
       inventory_items: {
         Row: {
+          cabin_number: string | null
           category: string
           created_at: string
           created_by: string | null
@@ -111,6 +112,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cabin_number?: string | null
           category: string
           created_at?: string
           created_by?: string | null
@@ -129,6 +131,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cabin_number?: string | null
           category?: string
           created_at?: string
           created_by?: string | null

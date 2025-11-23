@@ -20,6 +20,7 @@ interface InventoryItem {
   serial_number: string;
   quantity: number;
   location: string;
+  cabin_number: string;
   status: string;
   low_stock_threshold: number;
 }
@@ -246,11 +247,10 @@ const DepartmentDetail = () => {
                               <TableHead>Model</TableHead>
                               <TableHead>Category</TableHead>
                               <TableHead>Qty</TableHead>
-                              <TableHead>
-                                {department === "IT" || department === "AI&DS" || department === "CSE"
-                                  ? "Cabin Number"
-                                  : "Location"}
-                              </TableHead>
+                              {(department === "IT" || department === "AI&DS" || department === "CSE") && (
+                                <TableHead>Cabin Number</TableHead>
+                              )}
+                              <TableHead>Location</TableHead>
                               <TableHead>Actions</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -263,6 +263,9 @@ const DepartmentDetail = () => {
                                 <TableCell>{item.model || "-"}</TableCell>
                                 <TableCell>{item.category}</TableCell>
                                 <TableCell>{item.quantity}</TableCell>
+                                {(department === "IT" || department === "AI&DS" || department === "CSE") && (
+                                  <TableCell>{item.cabin_number || "-"}</TableCell>
+                                )}
                                 <TableCell>{item.location || "-"}</TableCell>
                                 <TableCell>
                                   <Button

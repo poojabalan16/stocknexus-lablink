@@ -27,6 +27,7 @@ const AddItem = () => {
   const [quantity, setQuantity] = useState("1");
   const [lowStockThreshold, setLowStockThreshold] = useState("5");
   const [location, setLocation] = useState("");
+  const [cabinNumber, setCabinNumber] = useState("");
   const [department, setDepartment] = useState("");
   const [specifications, setSpecifications] = useState("");
 
@@ -95,6 +96,7 @@ const AddItem = () => {
           quantity: parseInt(quantity),
           low_stock_threshold: parseInt(lowStockThreshold),
           location: location || null,
+          cabin_number: cabinNumber || null,
           department: department as any,
           specifications: specsObj,
           created_by: user.id,
@@ -211,6 +213,7 @@ const AddItem = () => {
           serial_number: normalizedRow.serial_number || normalizedRow.serialnumber || null,
           low_stock_threshold: parseInt(normalizedRow.low_stock_threshold || normalizedRow.lowstockthreshold || normalizedRow.threshold) || 5,
           location: normalizedRow.location || null,
+          cabin_number: normalizedRow.cabin_number || normalizedRow.cabinnumber || null,
         };
 
         // Handle specifications
@@ -353,21 +356,25 @@ const AddItem = () => {
                       />
                     </div>
 
+                    {(department === "IT" || department === "AI&DS" || department === "CSE") && (
+                      <div className="space-y-2">
+                        <Label htmlFor="cabin">Cabin Number</Label>
+                        <Input
+                          id="cabin"
+                          value={cabinNumber}
+                          onChange={(e) => setCabinNumber(e.target.value)}
+                          placeholder="e.g., Cabin 101"
+                        />
+                      </div>
+                    )}
+
                     <div className="space-y-2">
-                      <Label htmlFor="location">
-                        {department === "IT" || department === "AI&DS" || department === "CSE" 
-                          ? "Cabin Number" 
-                          : "Location"}
-                      </Label>
+                      <Label htmlFor="location">Location</Label>
                       <Input
                         id="location"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
-                        placeholder={
-                          department === "IT" || department === "AI&DS" || department === "CSE"
-                            ? "e.g., Cabin 101"
-                            : "Room 101, Lab A"
-                        }
+                        placeholder="Room 101, Lab A"
                       />
                     </div>
 
