@@ -43,54 +43,121 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { requestId, email, fullName, department, requestedRole }: ApproveUserRequest = await req.json();
 
-    // Generate a temporary password
-    const tempPassword = crypto.randomUUID();
-
-    // Create user in Supabase Auth
-    const { data: userData, error: createError } = await supabaseClient.auth.admin.createUser({
-      email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name: fullName,
-      },
-    });
-
-    if (createError) {
-      throw new Error(`Failed to create user: ${createError.message}`);
-    }
-
-    const userId = userData.user.id;
-
-    // Insert profile with approved status
-    console.log('Attempting to insert profile for user:', userId);
-    const { error: profileError } = await supabaseClient
-      .from("profiles")
-      .insert({
-        id: userId,
+    // First, check if user already exists (signed up through the combined form)
+    const { data: existingUsers, error: listError } = await supabaseClient.auth.admin.listUsers();
+    
+    let userId: string;
+    let isNewUser = false;
+    
+    const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    
+    if (existingUser) {
+      // User already exists - they signed up through the combined form
+      userId = existingUser.id;
+      console.log('Found existing user:', userId);
+      
+      // Update user's email confirmation if not confirmed
+      if (!existingUser.email_confirmed_at) {
+        await supabaseClient.auth.admin.updateUserById(userId, {
+          email_confirm: true,
+        });
+      }
+    } else {
+      // User doesn't exist - create new user with temporary password (legacy flow)
+      isNewUser = true;
+      const tempPassword = crypto.randomUUID();
+      
+      const { data: userData, error: createError } = await supabaseClient.auth.admin.createUser({
         email,
-        full_name: fullName,
-        department,
-        approved: true,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName,
+        },
       });
 
-    if (profileError) {
-      console.error('Profile creation error:', profileError);
-      throw new Error(`Failed to create profile: ${profileError.message}`);
+      if (createError) {
+        throw new Error(`Failed to create user: ${createError.message}`);
+      }
+      
+      userId = userData.user.id;
+      console.log('Created new user:', userId);
     }
-    console.log('Profile created successfully');
 
-    // Assign role
-    const { error: roleError } = await supabaseClient
+    // Check if profile exists
+    const { data: existingProfile } = await supabaseClient
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .single();
+
+    if (existingProfile) {
+      // Update existing profile
+      const { error: profileUpdateError } = await supabaseClient
+        .from("profiles")
+        .update({
+          department,
+          approved: true,
+        })
+        .eq("id", userId);
+
+      if (profileUpdateError) {
+        console.error('Profile update error:', profileUpdateError);
+        throw new Error(`Failed to update profile: ${profileUpdateError.message}`);
+      }
+      console.log('Profile updated successfully');
+    } else {
+      // Insert new profile
+      const { error: profileError } = await supabaseClient
+        .from("profiles")
+        .insert({
+          id: userId,
+          email,
+          full_name: fullName,
+          department,
+          approved: true,
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        throw new Error(`Failed to create profile: ${profileError.message}`);
+      }
+      console.log('Profile created successfully');
+    }
+
+    // Check if role already exists
+    const { data: existingRole } = await supabaseClient
       .from("user_roles")
-      .insert({
-        user_id: userId,
-        role: requestedRole,
-        department,
-      });
+      .select("id")
+      .eq("user_id", userId)
+      .single();
 
-    if (roleError) {
-      throw new Error(`Failed to assign role: ${roleError.message}`);
+    if (existingRole) {
+      // Update existing role
+      const { error: roleUpdateError } = await supabaseClient
+        .from("user_roles")
+        .update({
+          role: requestedRole,
+          department,
+        })
+        .eq("user_id", userId);
+
+      if (roleUpdateError) {
+        throw new Error(`Failed to update role: ${roleUpdateError.message}`);
+      }
+    } else {
+      // Assign new role
+      const { error: roleError } = await supabaseClient
+        .from("user_roles")
+        .insert({
+          user_id: userId,
+          role: requestedRole,
+          department,
+        });
+
+      if (roleError) {
+        throw new Error(`Failed to assign role: ${roleError.message}`);
+      }
     }
 
     // Update registration request
@@ -135,28 +202,47 @@ const handler = async (req: Request): Promise<Response> => {
     const projectId = Deno.env.get("SUPABASE_URL")?.split("//")[1]?.split(".")[0] || "lhlxygosvltrqigfathv";
     const appUrl = `https://id-preview--${projectId}.lovable.app`;
 
-    await resend.emails.send({
-      from: "StockNexus <onboarding@resend.dev>",
-      to: [email],
-      subject: "Your StockNexus Account Has Been Approved",
-      html: `
+    // Different email content based on whether user is new or existing
+    const emailContent = isNewUser 
+      ? `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #2563eb;">Welcome to StockNexus!</h1>
           <p>Hello ${fullName},</p>
-          <p>Your account has been approved! You can now log in to the system.</p>
+          <p>Your account has been approved! A temporary password has been created for you.</p>
           <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-            <p style="margin: 5px 0;"><strong>Temporary Password:</strong> ${tempPassword}</p>
             <p style="margin: 5px 0;"><strong>Department:</strong> ${department}</p>
             <p style="margin: 5px 0;"><strong>Role:</strong> ${requestedRole}</p>
           </div>
-          <p style="color: #dc2626;"><strong>Important:</strong> Please change your password after your first login.</p>
+          <p style="color: #dc2626;"><strong>Important:</strong> Please use the "Forgot Password" option to set your password.</p>
           <a href="${appUrl}/auth" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
             Log In Now
           </a>
           <p style="color: #6b7280; font-size: 14px;">If you have any questions, please contact your administrator.</p>
         </div>
-      `,
+      `
+      : `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2563eb;">Welcome to StockNexus!</h1>
+          <p>Hello ${fullName},</p>
+          <p>Great news! Your access request has been approved. You can now log in with the credentials you created during sign up.</p>
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+            <p style="margin: 5px 0;"><strong>Department:</strong> ${department}</p>
+            <p style="margin: 5px 0;"><strong>Role:</strong> ${requestedRole}</p>
+          </div>
+          <a href="${appUrl}/auth" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+            Log In Now
+          </a>
+          <p style="color: #6b7280; font-size: 14px;">If you forgot your password, use the "Forgot Password" option on the login page.</p>
+        </div>
+      `;
+
+    await resend.emails.send({
+      from: "StockNexus <onboarding@resend.dev>",
+      to: [email],
+      subject: "Your StockNexus Account Has Been Approved",
+      html: emailContent,
     });
 
     return new Response(
