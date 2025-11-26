@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Database, Package } from "lucide-react";
+import { Package } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -18,17 +18,14 @@ const Auth = () => {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // Registration state
-  const [regFullName, setRegFullName] = useState("");
-  const [regEmail, setRegEmail] = useState("");
-  const [regDepartment, setRegDepartment] = useState("");
-  const [regRole, setRegRole] = useState("");
-
-  // Sign up state
+  // Sign up state (combined with registration request)
   const [signUpFullName, setSignUpFullName] = useState("");
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpDepartment, setSignUpDepartment] = useState("");
+  const [signUpRole, setSignUpRole] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
+  const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("");
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -54,21 +51,48 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (signUpPassword !== signUpConfirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (signUpPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    if (!signUpDepartment) {
+      toast.error("Please select a department");
+      return;
+    }
+
+    if (!signUpRole) {
+      toast.error("Please select a role");
+      return;
+    }
+
     setLoading(true);
     try {
       const redirectUrl = `${window.location.origin}/`;
-      const { error } = await supabase.auth.signUp({
-        email: signUpEmail,
-        password: signUpPassword,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: { full_name: signUpFullName },
-        },
-      });
+      
+      // Check if this is admin signup
+      const isAdminSignup = signUpEmail.toLowerCase() === "admin@stocknexus.com";
+      
+      if (isAdminSignup) {
+        // Admin signup flow
+        const { error } = await supabase.auth.signUp({
+          email: signUpEmail,
+          password: signUpPassword,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: { full_name: signUpFullName },
+          },
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (signUpEmail.toLowerCase() === "admin@stocknexus.com") {
         const { error: fnError } = await supabase.functions.invoke("create-admin", {
           body: {
             email: signUpEmail,
@@ -80,49 +104,50 @@ const Auth = () => {
         if (fnError) throw fnError as any;
         toast.success("Admin account initialized. You can now sign in as admin.");
       } else {
-        toast.success("Sign up successful! You can now sign in.");
+        // Regular user signup - create auth user and registration request
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: signUpEmail,
+          password: signUpPassword,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: { full_name: signUpFullName },
+          },
+        });
+
+        if (signUpError) throw signUpError;
+
+        // Submit registration request for admin approval
+        const { error: regError } = await supabase
+          .from("registration_requests")
+          .insert([{
+            email: signUpEmail,
+            full_name: signUpFullName,
+            department: signUpDepartment as any,
+            requested_role: signUpRole as any,
+          }]);
+
+        if (regError) {
+          // If registration request fails due to duplicate, still allow signup
+          if (!regError.message.includes("duplicate")) {
+            console.error("Registration request error:", regError);
+          }
+        }
+
+        toast.success("Account created! Please wait for admin approval before you can access the system.");
       }
 
+      // Reset form
       setSignUpFullName("");
       setSignUpEmail("");
       setSignUpDepartment("");
+      setSignUpRole("");
       setSignUpPassword("");
+      setSignUpConfirmPassword("");
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign up");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegistrationRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // Insert registration request
-      const { error } = await supabase
-        .from("registration_requests")
-        .insert([{
-          email: regEmail,
-          full_name: regFullName,
-          department: regDepartment as any,
-          requested_role: regRole as any,
-        }]);
-
-      if (error) throw error;
-
-      toast.success("Registration request submitted! Please wait for admin approval.");
-      
-      // Reset form
-      setRegFullName("");
-      setRegEmail("");
-      setRegDepartment("");
-      setRegRole("");
-    } catch (error: any) {
-      if (error.message.includes("duplicate")) {
-        toast.error("A registration request with this email already exists");
+      if (error.message.includes("already registered")) {
+        toast.error("An account with this email already exists");
       } else {
-        toast.error(error.message || "Failed to submit registration request");
+        toast.error(error.message || "Failed to sign up");
       }
     } finally {
       setLoading(false);
@@ -141,10 +166,9 @@ const Auth = () => {
         </div>
 
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            <TabsTrigger value="register">Request Access</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
@@ -189,7 +213,9 @@ const Auth = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Create Account</CardTitle>
-                <CardDescription>Sign up with your email and a password</CardDescription>
+                <CardDescription>
+                  Sign up to request access. Admin approval required.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSignUp} className="space-y-4">
@@ -209,7 +235,7 @@ const Auth = () => {
                     <Input
                       id="signup-email"
                       type="email"
-                      placeholder="admin@stocknexus.com"
+                      placeholder="your.email@university.edu"
                       value={signUpEmail}
                       onChange={(e) => setSignUpEmail(e.target.value)}
                       required
@@ -217,7 +243,7 @@ const Auth = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-department">Department</Label>
-                    <Select value={signUpDepartment} onValueChange={setSignUpDepartment}>
+                    <Select value={signUpDepartment} onValueChange={setSignUpDepartment} required>
                       <SelectTrigger id="signup-department">
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
@@ -232,74 +258,9 @@ const Auth = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={signUpPassword}
-                      onChange={(e) => setSignUpPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Creating account..." : "Create Account"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="register">
-            <Card>
-              <CardHeader>
-                <CardTitle>Request Access</CardTitle>
-                <CardDescription>Submit a request to get access to the system</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleRegistrationRequest} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-name">Full Name</Label>
-                    <Input
-                      id="reg-name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={regFullName}
-                      onChange={(e) => setRegFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-email">Email</Label>
-                    <Input
-                      id="reg-email"
-                      type="email"
-                      placeholder="your.email@university.edu"
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-department">Department</Label>
-                    <Select value={regDepartment} onValueChange={setRegDepartment} required>
-                      <SelectTrigger id="reg-department">
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="IT">IT</SelectItem>
-                        <SelectItem value="AI&DS">AI&DS</SelectItem>
-                        <SelectItem value="CSE">CSE</SelectItem>
-                        <SelectItem value="Physics">Physics</SelectItem>
-                        <SelectItem value="Chemistry">Chemistry</SelectItem>
-                        <SelectItem value="Bio-tech">Bio-tech</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-role">Requested Role</Label>
-                    <Select value={regRole} onValueChange={setRegRole} required>
-                      <SelectTrigger id="reg-role">
+                    <Label htmlFor="signup-role">Requested Role</Label>
+                    <Select value={signUpRole} onValueChange={setSignUpRole} required>
+                      <SelectTrigger id="signup-role">
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -308,9 +269,36 @@ const Auth = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signUpPassword}
+                      onChange={(e) => setSignUpPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                    <Input
+                      id="signup-confirm-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signUpConfirmPassword}
+                      onChange={(e) => setSignUpConfirmPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Submitting..." : "Submit Request"}
+                    {loading ? "Creating account..." : "Create Account & Request Access"}
                   </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Your account will be created but access requires admin approval.
+                  </p>
                 </form>
               </CardContent>
             </Card>
