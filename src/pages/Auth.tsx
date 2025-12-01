@@ -43,17 +43,29 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Check if user is approved
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("approved")
-          .eq("id", data.user.id)
+        // Check if user is admin (admins bypass approval check)
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .eq("role", "admin")
           .single();
 
-        if (profile && !profile.approved) {
-          await supabase.auth.signOut();
-          toast.error("Your account is pending approval. Please wait for admin approval.");
-          return;
+        const isAdmin = !!roleData;
+
+        if (!isAdmin) {
+          // Check if user is approved (only for non-admin users)
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("approved")
+            .eq("id", data.user.id)
+            .single();
+
+          if (profile && !profile.approved) {
+            await supabase.auth.signOut();
+            toast.error("Your account is pending approval. Please wait for admin approval.");
+            return;
+          }
         }
 
         toast.success("Login successful!");
