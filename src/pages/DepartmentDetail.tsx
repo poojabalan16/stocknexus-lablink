@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Package, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Package, Edit, Check, X } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { StatsGridSkeleton } from "@/components/skeletons/StatsCardSkeleton";
 
@@ -42,6 +42,8 @@ const DepartmentDetail = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userDepartment, setUserDepartment] = useState<string | null>(null);
   const [itemSummaries, setItemSummaries] = useState<ItemSummary[]>([]);
+  const [editingCabinId, setEditingCabinId] = useState<string | null>(null);
+  const [editingCabinValue, setEditingCabinValue] = useState("");
 
   useEffect(() => {
     checkAuth();
@@ -122,6 +124,37 @@ const DepartmentDetail = () => {
 
   const canManageItems = () => {
     return userRole === "admin" || (userRole === "hod" && userDepartment === department);
+  };
+
+  const handleCabinEdit = (item: InventoryItem) => {
+    setEditingCabinId(item.id);
+    setEditingCabinValue(item.cabin_number || "");
+  };
+
+  const handleCabinSave = async (itemId: string) => {
+    try {
+      const { error } = await supabase
+        .from("inventory_items")
+        .update({ cabin_number: editingCabinValue || null })
+        .eq("id", itemId);
+
+      if (error) throw error;
+
+      setItems(items.map(item => 
+        item.id === itemId ? { ...item, cabin_number: editingCabinValue } : item
+      ));
+      toast.success("Cabin number updated");
+    } catch (error: any) {
+      toast.error("Failed to update cabin number");
+    } finally {
+      setEditingCabinId(null);
+      setEditingCabinValue("");
+    }
+  };
+
+  const handleCabinCancel = () => {
+    setEditingCabinId(null);
+    setEditingCabinValue("");
   };
 
   const getStatusBadge = (summary: ItemSummary) => {
@@ -262,7 +295,45 @@ const DepartmentDetail = () => {
                                 <TableCell>{item.model || "-"}</TableCell>
                                 <TableCell>{item.quantity}</TableCell>
                                 {(department === "IT" || department === "AI&DS" || department === "CSE") && (
-                                  <TableCell>{item.cabin_number || "-"}</TableCell>
+                                  <TableCell>
+                                    {editingCabinId === item.id ? (
+                                      <div className="flex items-center gap-1">
+                                        <Input
+                                          value={editingCabinValue}
+                                          onChange={(e) => setEditingCabinValue(e.target.value)}
+                                          className="h-8 w-24"
+                                          autoFocus
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") handleCabinSave(item.id);
+                                            if (e.key === "Escape") handleCabinCancel();
+                                          }}
+                                        />
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={() => handleCabinSave(item.id)}
+                                        >
+                                          <Check className="h-4 w-4 text-success" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={handleCabinCancel}
+                                        >
+                                          <X className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <span
+                                        className={canManageItems() ? "cursor-pointer hover:underline" : ""}
+                                        onClick={() => canManageItems() && handleCabinEdit(item)}
+                                      >
+                                        {item.cabin_number || "-"}
+                                      </span>
+                                    )}
+                                  </TableCell>
                                 )}
                                 <TableCell>{item.location || "-"}</TableCell>
                                 <TableCell>
