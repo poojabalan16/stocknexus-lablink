@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Package, Edit, Check, X } from "lucide-react";
+import { Plus, Search, Package, Edit, Check, X, Filter } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { StatsGridSkeleton } from "@/components/skeletons/StatsCardSkeleton";
 
@@ -39,6 +40,7 @@ const DepartmentDetail = () => {
   const [filteredItems, setFilteredItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userDepartment, setUserDepartment] = useState<string | null>(null);
   const [itemSummaries, setItemSummaries] = useState<ItemSummary[]>([]);
@@ -51,8 +53,11 @@ const DepartmentDetail = () => {
   }, [department]);
 
   useEffect(() => {
+    // Filter items based on search and status
+    let filtered = items;
+    
     if (searchQuery) {
-      const filtered = items.filter(
+      filtered = filtered.filter(
         (item) =>
           item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -60,14 +65,13 @@ const DepartmentDetail = () => {
           item.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.cabin_number?.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredItems(filtered);
-    } else {
-      setFilteredItems(items);
     }
     
-    // Calculate summaries grouped by item name
+    setFilteredItems(filtered);
+    
+    // Calculate summaries grouped by item name, applying status filter
     const summaryMap = new Map<string, ItemSummary>();
-    items.forEach(item => {
+    filtered.forEach(item => {
       const existing = summaryMap.get(item.name);
       if (existing) {
         existing.totalQuantity += item.quantity;
@@ -81,8 +85,20 @@ const DepartmentDetail = () => {
         });
       }
     });
-    setItemSummaries(Array.from(summaryMap.values()));
-  }, [searchQuery, items]);
+    
+    // Apply status filter to summaries
+    let summaries = Array.from(summaryMap.values());
+    if (statusFilter !== "all") {
+      summaries = summaries.filter(summary => {
+        if (statusFilter === "out_of_stock") return summary.totalQuantity === 0;
+        if (statusFilter === "low_stock") return summary.totalQuantity > 0 && summary.totalQuantity <= summary.lowStockThreshold;
+        if (statusFilter === "in_stock") return summary.totalQuantity > summary.lowStockThreshold;
+        return true;
+      });
+    }
+    
+    setItemSummaries(summaries);
+  }, [searchQuery, items, statusFilter]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -218,14 +234,28 @@ const DepartmentDetail = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, category, model, or serial number..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="max-w-md"
-                />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, model, serial number, cabin..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="in_stock">In Stock</SelectItem>
+                    <SelectItem value="low_stock">Low Stock</SelectItem>
+                    <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Summary Statistics */}
