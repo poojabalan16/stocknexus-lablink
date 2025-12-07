@@ -54,10 +54,11 @@ const DepartmentDetail = () => {
     if (searchQuery) {
       const filtered = items.filter(
         (item) =>
-          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.serial_number?.toLowerCase().includes(searchQuery.toLowerCase())
+          item.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.cabin_number?.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredItems(filtered);
     } else {
