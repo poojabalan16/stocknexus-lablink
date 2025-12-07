@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, XCircle, Clock, User } from "lucide-react";
+import { CheckCircle, XCircle, Clock, User, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface RegistrationRequest {
@@ -26,7 +26,7 @@ const Users = () => {
   const [requests, setRequests] = useState<RegistrationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequest | null>(null);
-  const [actionType, setActionType] = useState<"approve" | "reject" | null>(null);
+  const [actionType, setActionType] = useState<"approve" | "reject" | "delete" | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -154,6 +154,25 @@ const Users = () => {
     }
   };
 
+  const handleDelete = async (request: RegistrationRequest) => {
+    try {
+      const { error } = await supabase
+        .from("registration_requests")
+        .delete()
+        .eq("id", request.id);
+
+      if (error) throw error;
+
+      toast.success("Request deleted successfully");
+      fetchRequests();
+    } catch (error: any) {
+      toast.error("Failed to delete request");
+    } finally {
+      setSelectedRequest(null);
+      setActionType(null);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -218,30 +237,46 @@ const Users = () => {
                         <TableCell className="capitalize">{request.requested_role}</TableCell>
                         <TableCell>{getStatusBadge(request.status)}</TableCell>
                         <TableCell>
-                          {request.status === "pending" && (
-                            <div className="flex gap-2">
+                          <div className="flex gap-2">
+                            {request.status === "pending" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => {
+                                    setSelectedRequest(request);
+                                    setActionType("approve");
+                                  }}
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    setSelectedRequest(request);
+                                    setActionType("reject");
+                                  }}
+                                >
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                            {request.status === "rejected" && (
                               <Button
                                 size="sm"
-                                variant="default"
+                                variant="outline"
+                                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                                 onClick={() => {
                                   setSelectedRequest(request);
-                                  setActionType("approve");
+                                  setActionType("delete");
                                 }}
                               >
-                                Approve
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                  setSelectedRequest(request);
-                                  setActionType("reject");
-                                }}
-                              >
-                                Reject
-                              </Button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -260,12 +295,14 @@ const Users = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {actionType === "approve" ? "Approve Request" : "Reject Request"}
+              {actionType === "approve" ? "Approve Request" : actionType === "reject" ? "Reject Request" : "Delete Request"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {actionType === "approve"
                 ? `Are you sure you want to approve ${selectedRequest?.full_name}'s request? A user account will be created and they will receive an email to set their password.`
-                : `Are you sure you want to reject ${selectedRequest?.full_name}'s request?`}
+                : actionType === "reject"
+                ? `Are you sure you want to reject ${selectedRequest?.full_name}'s request?`
+                : `Are you sure you want to permanently delete ${selectedRequest?.full_name}'s rejected request? This action cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -276,10 +313,13 @@ const Users = () => {
                   handleApprove(selectedRequest);
                 } else if (selectedRequest && actionType === "reject") {
                   handleReject(selectedRequest);
+                } else if (selectedRequest && actionType === "delete") {
+                  handleDelete(selectedRequest);
                 }
               }}
+              className={actionType === "delete" ? "bg-destructive hover:bg-destructive/90" : ""}
             >
-              {actionType === "approve" ? "Approve" : "Reject"}
+              {actionType === "approve" ? "Approve" : actionType === "reject" ? "Reject" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
