@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,29 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Users, Package, AlertTriangle, TrendingUp, 
-  UserCheck, UserX, Clock, Shield, Edit, Trash2 
+  UserCheck, Clock, Shield, Edit, Trash2, Search 
 } from "lucide-react";
+
+const DEPARTMENTS = ["IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech"] as const;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
   const [stats, setStats] = useState({
     totalUsers: 0,
     pendingRequests: 0,
     totalItems: 0,
     lowStockItems: 0,
     activeAlerts: 0,
-    departments: {
-      emergency: 0,
-      icu: 0,
-      general: 0,
-      pediatrics: 0,
-      surgery: 0,
-    }
+    departments: {} as Record<string, number>
   });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [allItems, setAllItems] = useState<any[]>([]);
@@ -121,6 +121,20 @@ const AdminDashboard = () => {
       toast.error("Failed to delete item");
     }
   };
+
+  const filteredItems = useMemo(() => {
+    return allItems.filter((item) => {
+      const matchesSearch = searchQuery === "" || 
+        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.cabin_number?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesDepartment = departmentFilter === "all" || item.department === departmentFilter;
+      
+      return matchesSearch && matchesDepartment;
+    });
+  }, [allItems, searchQuery, departmentFilter]);
 
   if (loading) {
     return (
@@ -250,6 +264,28 @@ const AdminDashboard = () => {
                 <CardDescription>Manage items across all departments</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name, model, serial number..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="Filter by department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Departments</SelectItem>
+                      {DEPARTMENTS.map((dept) => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
@@ -262,7 +298,7 @@ const AdminDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allItems.map((item) => (
+                      {filteredItems.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell className="capitalize">{item.department}</TableCell>
