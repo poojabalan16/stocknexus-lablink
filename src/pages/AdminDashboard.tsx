@@ -256,7 +256,6 @@ const AdminDashboard = () => {
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Department</TableHead>
-                        <TableHead>Category</TableHead>
                         <TableHead>Quantity</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
@@ -267,7 +266,6 @@ const AdminDashboard = () => {
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell className="capitalize">{item.department}</TableCell>
-                          <TableCell>{item.category}</TableCell>
                           <TableCell>
                             <span className={item.quantity <= item.low_stock_threshold ? "text-destructive font-bold" : ""}>
                               {item.quantity}
@@ -283,7 +281,7 @@ const AdminDashboard = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => navigate(`/item/${item.id}`)}
+                                onClick={() => navigate(`/inventory/${item.id}`)}
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>
