@@ -384,7 +384,7 @@ const AdminDashboard = () => {
                 <UserCheck className="h-4 w-4 mr-2" />
                 Manage Users
               </Button>
-              <Button onClick={() => navigate("/add-item")}>
+              <Button onClick={() => navigate("/inventory/add")}>
                 <Package className="h-4 w-4 mr-2" />
                 Add New Item
               </Button>
