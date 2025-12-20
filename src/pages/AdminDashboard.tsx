@@ -92,7 +92,7 @@ const AdminDashboard = () => {
         totalUsers: users.length,
         pendingRequests: requests.length,
         totalItems: items.length,
-        lowStockItems: items.filter(i => i.quantity <= i.low_stock_threshold).length,
+        lowStockItems: items.filter(i => i.quantity < 10).length,
         activeAlerts: alerts.length,
         departments: deptStats,
       });
@@ -347,7 +347,7 @@ const AdminDashboard = () => {
                             <TableCell className="font-medium">{item.name}</TableCell>
                             <TableCell className="capitalize">{item.department}</TableCell>
                             <TableCell>
-                              <span className={item.quantity <= item.low_stock_threshold ? "text-destructive font-bold" : ""}>
+                              <span className={item.quantity < 10 ? "text-destructive font-bold" : ""}>
                                 {item.quantity}
                               </span>
                             </TableCell>
