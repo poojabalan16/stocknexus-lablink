@@ -242,7 +242,7 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-destructive">{stats.lowStockItems}</div>
-              <p className="text-xs text-muted-foreground mt-1">Items need restocking</p>
+              <p className="text-xs text-muted-foreground mt-1">Items below 10 units</p>
             </CardContent>
           </Card>
 
