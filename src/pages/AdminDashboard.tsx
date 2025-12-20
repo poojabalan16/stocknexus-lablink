@@ -8,6 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -16,12 +24,14 @@ import {
 } from "lucide-react";
 
 const DEPARTMENTS = ["IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech"] as const;
+const ITEMS_PER_PAGE = 10;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [stats, setStats] = useState({
     totalUsers: 0,
     pendingRequests: 0,
@@ -135,6 +145,33 @@ const AdminDashboard = () => {
       return matchesSearch && matchesDepartment;
     });
   }, [allItems, searchQuery, departmentFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, departmentFilter]);
+
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage]);
+
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, "ellipsis", totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, "ellipsis", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, "ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", totalPages);
+      }
+    }
+    return pages;
+  };
 
   if (loading) {
     return (
@@ -298,43 +335,91 @@ const AdminDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell className="capitalize">{item.department}</TableCell>
-                          <TableCell>
-                            <span className={item.quantity <= item.low_stock_threshold ? "text-destructive font-bold" : ""}>
-                              {item.quantity}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={item.status === "available" ? "default" : "secondary"}>
-                              {item.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => navigate(`/inventory/${item.id}`)}
-                              >
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleDeleteItem(item.id)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
+                      {paginatedItems.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            No items found
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        paginatedItems.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.name}</TableCell>
+                            <TableCell className="capitalize">{item.department}</TableCell>
+                            <TableCell>
+                              <span className={item.quantity <= item.low_stock_threshold ? "text-destructive font-bold" : ""}>
+                                {item.quantity}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={item.status === "available" ? "default" : "secondary"}>
+                                {item.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => navigate(`/inventory/${item.id}`)}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeleteItem(item.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>
+                
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of {filteredItems.length} items
+                    </p>
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        {getPageNumbers().map((page, index) => (
+                          <PaginationItem key={index}>
+                            {page === "ellipsis" ? (
+                              <span className="px-2">...</span>
+                            ) : (
+                              <PaginationLink
+                                onClick={() => setCurrentPage(page)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            )}
+                          </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
