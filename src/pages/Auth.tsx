@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Package } from "lucide-react";
+import { Package, Mail, Lock, User, Building2, Shield, ArrowRight, KeyRound, CheckCircle2 } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -175,197 +175,342 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Package className="h-12 w-12 text-primary" />
-            <h1 className="text-4xl font-bold text-primary">StockNexus</h1>
-          </div>
-          <p className="text-muted-foreground">Laboratory Inventory Management System</p>
+    <div className="min-h-screen flex">
+      {/* Left Panel - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 gradient-primary relative overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary-foreground/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary-foreground/5 rounded-full" />
         </div>
 
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="h-full w-full" style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: '40px 40px'
+          }} />
+        </div>
 
-          <TabsContent value="login">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sign In</CardTitle>
-                <CardDescription>Enter your credentials to access the system</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="your.email@university.edu"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Signing in..." : "Sign In"}
-                  </Button>
-                  
-                  <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
-                    <DialogTrigger asChild>
-                      <Button type="button" variant="link" className="w-full text-sm">
-                        Forgot your password?
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Reset Password</DialogTitle>
-                        <DialogDescription>
-                          Enter your email address and we'll send you a link to reset your password.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handleForgotPassword} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="reset-email">Email</Label>
-                          <Input
-                            id="reset-email"
-                            type="email"
-                            placeholder="your.email@university.edu"
-                            value={resetEmail}
-                            onChange={(e) => setResetEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setForgotPasswordOpen(false)}
-                            className="flex-1"
-                          >
-                            Cancel
-                          </Button>
-                          <Button type="submit" className="flex-1" disabled={resetLoading}>
-                            {resetLoading ? "Sending..." : "Send Reset Link"}
-                          </Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20 text-primary-foreground">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-4 bg-primary-foreground/20 rounded-2xl backdrop-blur-sm">
+              <Package className="h-12 w-12" />
+            </div>
+            <div>
+              <h1 className="text-4xl xl:text-5xl font-bold tracking-tight">StockNexus</h1>
+              <p className="text-primary-foreground/80 text-lg">Inventory Management System</p>
+            </div>
+          </div>
 
-          <TabsContent value="signup">
-            <Card>
-              <CardHeader>
-                <CardTitle>Create Account & Request Access</CardTitle>
-                <CardDescription>
-                  Sign up to request access. Admin approval required.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={signUpFullName}
-                      onChange={(e) => setSignUpFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your.email@university.edu"
-                      value={signUpEmail}
-                      onChange={(e) => setSignUpEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-department">Department</Label>
-                    <Select value={signUpDepartment} onValueChange={setSignUpDepartment} required>
-                      <SelectTrigger id="signup-department">
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="IT">IT</SelectItem>
-                        <SelectItem value="AI&DS">AI&DS</SelectItem>
-                        <SelectItem value="CSE">CSE</SelectItem>
-                        <SelectItem value="Physics">Physics</SelectItem>
-                        <SelectItem value="Chemistry">Chemistry</SelectItem>
-                        <SelectItem value="Bio-tech">Bio-tech</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-role">Requested Role</Label>
-                    <Select value={signUpRole} onValueChange={setSignUpRole} required>
-                      <SelectTrigger id="signup-role">
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hod">Head of Department</SelectItem>
-                        <SelectItem value="staff">Staff</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={signUpPassword}
-                      onChange={(e) => setSignUpPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                    <Input
-                      id="signup-confirm-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={signUpConfirmPassword}
-                      onChange={(e) => setSignUpConfirmPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Creating account..." : "Create Account & Request Access"}
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Your account will be created but access requires admin approval.
-                  </p>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          <div className="space-y-8 mt-8">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-primary-foreground/20 rounded-lg mt-1">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Real-time Inventory Tracking</h3>
+                <p className="text-primary-foreground/70">Monitor stock levels across all departments with live updates</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-primary-foreground/20 rounded-lg mt-1">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Smart Alerts & Notifications</h3>
+                <p className="text-primary-foreground/70">Automated low-stock alerts to prevent inventory shortages</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-primary-foreground/20 rounded-lg mt-1">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Comprehensive Reporting</h3>
+                <p className="text-primary-foreground/70">Generate detailed reports for informed decision making</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-16 pt-8 border-t border-primary-foreground/20">
+            <p className="text-primary-foreground/60 text-sm">
+              Trusted by laboratory departments for efficient inventory management
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Auth Forms */}
+      <div className="flex-1 flex items-center justify-center bg-background p-6 sm:p-8 lg:p-12">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="inline-flex items-center gap-3 mb-2">
+              <div className="p-3 gradient-primary rounded-xl">
+                <Package className="h-8 w-8 text-primary-foreground" />
+              </div>
+              <h1 className="text-3xl font-bold text-primary">StockNexus</h1>
+            </div>
+            <p className="text-muted-foreground">Laboratory Inventory Management</p>
+          </div>
+
+          <div className="hidden lg:block mb-8">
+            <h2 className="text-2xl font-bold text-foreground">Welcome back</h2>
+            <p className="text-muted-foreground mt-1">Sign in to access your dashboard</p>
+          </div>
+
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
+              <TabsTrigger value="login" className="text-sm font-medium">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="text-sm font-medium">Create Account</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="login" className="mt-0">
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl">Sign In</CardTitle>
+                  <CardDescription>Enter your credentials to access the system</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleLogin} className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email" className="text-sm font-medium">Email Address</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="login-email"
+                          type="email"
+                          placeholder="your.email@university.edu"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          className="pl-10 h-11"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="login-password"
+                          type="password"
+                          placeholder="••••••••"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          className="pl-10 h-11"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <Button type="submit" className="w-full h-11 font-medium" disabled={loading}>
+                      {loading ? (
+                        <span className="flex items-center gap-2">
+                          <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                          Signing in...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          Sign In
+                          <ArrowRight className="h-4 w-4" />
+                        </span>
+                      )}
+                    </Button>
+                    
+                    <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+                      <DialogTrigger asChild>
+                        <Button type="button" variant="link" className="w-full text-sm text-muted-foreground hover:text-primary">
+                          Forgot your password?
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
+                            <KeyRound className="h-6 w-6 text-primary" />
+                          </div>
+                          <DialogTitle className="text-center">Reset Password</DialogTitle>
+                          <DialogDescription className="text-center">
+                            Enter your email address and we'll send you a link to reset your password.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleForgotPassword} className="space-y-4 mt-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-email">Email Address</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                id="reset-email"
+                                type="email"
+                                placeholder="your.email@university.edu"
+                                value={resetEmail}
+                                onChange={(e) => setResetEmail(e.target.value)}
+                                className="pl-10"
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-3 pt-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setForgotPasswordOpen(false)}
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                            <Button type="submit" className="flex-1" disabled={resetLoading}>
+                              {resetLoading ? "Sending..." : "Send Reset Link"}
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="signup" className="mt-0">
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl">Create Account</CardTitle>
+                  <CardDescription>
+                    Request access to the system. Admin approval required.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-name"
+                          type="text"
+                          placeholder="John Doe"
+                          value={signUpFullName}
+                          onChange={(e) => setSignUpFullName(e.target.value)}
+                          className="pl-10 h-11"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email" className="text-sm font-medium">Email Address</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          placeholder="your.email@university.edu"
+                          value={signUpEmail}
+                          onChange={(e) => setSignUpEmail(e.target.value)}
+                          className="pl-10 h-11"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-department" className="text-sm font-medium">Department</Label>
+                        <Select value={signUpDepartment} onValueChange={setSignUpDepartment} required>
+                          <SelectTrigger id="signup-department" className="h-11">
+                            <Building2 className="h-4 w-4 text-muted-foreground mr-2" />
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="IT">IT</SelectItem>
+                            <SelectItem value="AI&DS">AI&DS</SelectItem>
+                            <SelectItem value="CSE">CSE</SelectItem>
+                            <SelectItem value="Physics">Physics</SelectItem>
+                            <SelectItem value="Chemistry">Chemistry</SelectItem>
+                            <SelectItem value="Bio-tech">Bio-tech</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-role" className="text-sm font-medium">Role</Label>
+                        <Select value={signUpRole} onValueChange={setSignUpRole} required>
+                          <SelectTrigger id="signup-role" className="h-11">
+                            <Shield className="h-4 w-4 text-muted-foreground mr-2" />
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="hod">Head of Dept</SelectItem>
+                            <SelectItem value="staff">Staff</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password" className="text-sm font-medium">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-password"
+                          type="password"
+                          placeholder="••••••••"
+                          value={signUpPassword}
+                          onChange={(e) => setSignUpPassword(e.target.value)}
+                          className="pl-10 h-11"
+                          required
+                          minLength={6}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm-password" className="text-sm font-medium">Confirm Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-confirm-password"
+                          type="password"
+                          placeholder="••••••••"
+                          value={signUpConfirmPassword}
+                          onChange={(e) => setSignUpConfirmPassword(e.target.value)}
+                          className="pl-10 h-11"
+                          required
+                          minLength={6}
+                        />
+                      </div>
+                    </div>
+                    
+                    <Button type="submit" className="w-full h-11 font-medium mt-2" disabled={loading}>
+                      {loading ? (
+                        <span className="flex items-center gap-2">
+                          <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                          Creating account...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          Create Account & Request Access
+                          <ArrowRight className="h-4 w-4" />
+                        </span>
+                      )}
+                    </Button>
+                    
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg mt-4">
+                      <Shield className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <p className="text-xs text-muted-foreground">
+                        Your account will be created but system access requires admin approval.
+                      </p>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          <p className="text-center text-xs text-muted-foreground mt-8">
+            © {new Date().getFullYear()} StockNexus. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   );
