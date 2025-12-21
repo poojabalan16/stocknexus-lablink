@@ -70,58 +70,23 @@ const Users = () => {
 
   const handleApprove = async (request: RegistrationRequest) => {
     try {
-      // Create user account
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: request.email,
-        password: Math.random().toString(36).slice(-12), // Generate random password
-        options: {
-          data: {
-            full_name: request.full_name,
-          },
-          emailRedirectTo: `${window.location.origin}/auth`,
+      const { data, error } = await supabase.functions.invoke('approve-user', {
+        body: {
+          requestId: request.id,
+          email: request.email,
+          fullName: request.full_name,
+          department: request.department,
+          requestedRole: request.requested_role,
         },
       });
 
-      if (signUpError) throw signUpError;
-
-      if (!authData.user) {
-        throw new Error("Failed to create user");
+      if (error) throw error;
+      
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
-      // Create profile
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          email: request.email,
-          full_name: request.full_name,
-          department: request.department as any,
-        } as any);
-
-      if (profileError) throw profileError;
-
-      // Assign role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({
-          role: request.requested_role as any,
-          department: request.department as any,
-        } as any);
-
-      if (roleError) throw roleError;
-
-      // Update request status
-      const { error: updateError } = await supabase
-        .from("registration_requests")
-        .update({ 
-          status: "approved",
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: (await supabase.auth.getUser()).data.user?.id,
-        })
-        .eq("id", request.id);
-
-      if (updateError) throw updateError;
-
-      toast.success("User approved successfully! They will receive a password reset email.");
+      toast.success("User approved successfully! They will receive a confirmation email.");
       fetchRequests();
     } catch (error: any) {
       toast.error(error.message || "Failed to approve user");
