@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Mail, Lock, User, Building2, Shield, ArrowRight, KeyRound, CheckCircle2 } from "lucide-react";
+import { Package, Mail, Lock, User, Building2, Shield, ArrowRight, KeyRound } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -175,92 +175,18 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 gradient-primary relative overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary-foreground/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary-foreground/5 rounded-full" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-6 sm:p-8">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-3 mb-2">
+            <div className="p-3 gradient-primary rounded-xl">
+              <Package className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl font-bold text-primary">StockNexus</h1>
+          </div>
+          <p className="text-muted-foreground">Laboratory Inventory Management</p>
         </div>
-
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="h-full w-full" style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '40px 40px'
-          }} />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20 text-primary-foreground">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="p-4 bg-primary-foreground/20 rounded-2xl backdrop-blur-sm">
-              <Package className="h-12 w-12" />
-            </div>
-            <div>
-              <h1 className="text-4xl xl:text-5xl font-bold tracking-tight">StockNexus</h1>
-              <p className="text-primary-foreground/80 text-lg">Inventory Management System</p>
-            </div>
-          </div>
-
-          <div className="space-y-8 mt-8">
-            <div className="flex items-start gap-4">
-              <div className="p-2 bg-primary-foreground/20 rounded-lg mt-1">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Real-time Inventory Tracking</h3>
-                <p className="text-primary-foreground/70">Monitor stock levels across all departments with live updates</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="p-2 bg-primary-foreground/20 rounded-lg mt-1">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Smart Alerts & Notifications</h3>
-                <p className="text-primary-foreground/70">Automated low-stock alerts to prevent inventory shortages</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="p-2 bg-primary-foreground/20 rounded-lg mt-1">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Comprehensive Reporting</h3>
-                <p className="text-primary-foreground/70">Generate detailed reports for informed decision making</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-16 pt-8 border-t border-primary-foreground/20">
-            <p className="text-primary-foreground/60 text-sm">
-              Trusted by laboratory departments for efficient inventory management
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Panel - Auth Forms */}
-      <div className="flex-1 flex items-center justify-center bg-background p-6 sm:p-8 lg:p-12">
-        <div className="w-full max-w-md">
-          {/* Mobile Logo */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center gap-3 mb-2">
-              <div className="p-3 gradient-primary rounded-xl">
-                <Package className="h-8 w-8 text-primary-foreground" />
-              </div>
-              <h1 className="text-3xl font-bold text-primary">StockNexus</h1>
-            </div>
-            <p className="text-muted-foreground">Laboratory Inventory Management</p>
-          </div>
-
-          <div className="hidden lg:block mb-8">
-            <h2 className="text-2xl font-bold text-foreground">Welcome back</h2>
-            <p className="text-muted-foreground mt-1">Sign in to access your dashboard</p>
-          </div>
 
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
@@ -512,7 +438,6 @@ const Auth = () => {
           </p>
         </div>
       </div>
-    </div>
   );
 };
 
