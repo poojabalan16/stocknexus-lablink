@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, XCircle, Clock, User, Trash2, Users as UsersIcon, Shield, Edit2 } from "lucide-react";
+import { CheckCircle, XCircle, Clock, User, Trash2, Users as UsersIcon, Shield, Edit2, UserX, RotateCcw } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,11 +47,15 @@ const Users = () => {
   const [editingUser, setEditingUser] = useState<ApprovedUser | null>(null);
   const [newRole, setNewRole] = useState<string>("");
   const [newDepartment, setNewDepartment] = useState<string>("");
+  const [userToDeactivate, setUserToDeactivate] = useState<ApprovedUser | null>(null);
+  const [deactivatedUsers, setDeactivatedUsers] = useState<ApprovedUser[]>([]);
+  const [deactivatedLoading, setDeactivatedLoading] = useState(true);
 
   useEffect(() => {
     checkAuth();
     fetchRequests();
     fetchApprovedUsers();
+    fetchDeactivatedUsers();
   }, []);
 
   const checkAuth = async () => {
@@ -122,6 +126,44 @@ const Users = () => {
       toast.error("Failed to load approved users");
     } finally {
       setUsersLoading(false);
+    }
+  };
+
+  const fetchDeactivatedUsers = async () => {
+    try {
+      // Fetch deactivated profiles (approved = false but has user_roles entry)
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("approved", false)
+        .order("created_at", { ascending: false });
+
+      if (profilesError) throw profilesError;
+
+      // Fetch user roles
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("*");
+
+      if (rolesError) throw rolesError;
+
+      // Only include profiles that have a user role (these are deactivated users, not pending)
+      const deactivatedWithRoles = (profiles || [])
+        .filter(profile => roles?.some(r => r.user_id === profile.id))
+        .map(profile => {
+          const userRole = roles?.find(r => r.user_id === profile.id);
+          return {
+            ...profile,
+            role: userRole?.role || 'staff',
+            role_department: userRole?.department || profile.department,
+          };
+        });
+
+      setDeactivatedUsers(deactivatedWithRoles);
+    } catch (error: any) {
+      toast.error("Failed to load deactivated users");
+    } finally {
+      setDeactivatedLoading(false);
     }
   };
 
@@ -235,6 +277,43 @@ const Users = () => {
     }
   };
 
+  const handleDeactivateUser = async () => {
+    if (!userToDeactivate) return;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ approved: false })
+        .eq("id", userToDeactivate.id);
+
+      if (error) throw error;
+
+      toast.success(`${userToDeactivate.full_name}'s access has been revoked`);
+      setUserToDeactivate(null);
+      fetchApprovedUsers();
+      fetchDeactivatedUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to deactivate user");
+    }
+  };
+
+  const handleReactivateUser = async (user: ApprovedUser) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ approved: true })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast.success(`${user.full_name}'s access has been restored`);
+      fetchApprovedUsers();
+      fetchDeactivatedUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to reactivate user");
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -280,7 +359,7 @@ const Users = () => {
         </div>
 
         <Tabs defaultValue="requests" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="requests" className="gap-2">
               <Clock className="h-4 w-4" />
               Requests
@@ -290,7 +369,14 @@ const Users = () => {
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <UsersIcon className="h-4 w-4" />
-              Approved Users
+              Active Users
+            </TabsTrigger>
+            <TabsTrigger value="deactivated" className="gap-2">
+              <UserX className="h-4 w-4" />
+              Deactivated
+              {deactivatedUsers.length > 0 && (
+                <Badge variant="destructive" className="ml-1">{deactivatedUsers.length}</Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -419,13 +505,78 @@ const Users = () => {
                               {new Date(user.created_at).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditUser(user)}
+                                >
+                                  <Edit2 className="h-4 w-4 mr-1" />
+                                  Edit Role
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                  onClick={() => setUserToDeactivate(user)}
+                                >
+                                  <UserX className="h-4 w-4 mr-1" />
+                                  Deactivate
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="deactivated">
+            <Card className="border-destructive/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <UserX className="h-5 w-5" />
+                  Deactivated Users
+                </CardTitle>
+                <CardDescription>Users whose access has been revoked</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {deactivatedLoading ? (
+                  <p className="text-center py-8 text-muted-foreground">Loading...</p>
+                ) : deactivatedUsers.length === 0 ? (
+                  <p className="text-center py-8 text-muted-foreground">No deactivated users</p>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Department</TableHead>
+                          <TableHead>Former Role</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {deactivatedUsers.map((user) => (
+                          <TableRow key={user.id} className="opacity-70">
+                            <TableCell className="font-medium">{user.full_name}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{user.role_department || user.department || '-'}</TableCell>
+                            <TableCell>{getRoleBadge(user.role || 'staff')}</TableCell>
+                            <TableCell>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleEditUser(user)}
+                                className="text-green-600 hover:bg-green-600 hover:text-white"
+                                onClick={() => handleReactivateUser(user)}
                               >
-                                <Edit2 className="h-4 w-4 mr-1" />
-                                Edit Role
+                                <RotateCcw className="h-4 w-4 mr-1" />
+                                Reactivate
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -528,6 +679,31 @@ const Users = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Deactivate User Dialog */}
+      <AlertDialog open={!!userToDeactivate} onOpenChange={() => setUserToDeactivate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <UserX className="h-5 w-5" />
+              Deactivate User
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to revoke access for <strong>{userToDeactivate?.full_name}</strong>? 
+              They will no longer be able to log in to the system. You can reactivate their account later if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeactivateUser}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Deactivate User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
