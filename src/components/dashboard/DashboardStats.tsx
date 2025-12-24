@@ -9,7 +9,7 @@ export function DashboardStats() {
   const [stats, setStats] = useState({
     totalItems: 0,
     lowStockItems: 0,
-    totalDepartments: 6,
+    totalDepartments: 8,
     activeAlerts: 0,
   });
 
@@ -17,20 +17,33 @@ export function DashboardStats() {
     const fetchStats = async () => {
       setLoading(true);
       const [itemsResult, alertsResult] = await Promise.all([
-        supabase.from("inventory_items").select("id, quantity, low_stock_threshold"),
+        supabase.from("inventory_items").select("id, name, department, quantity, low_stock_threshold"),
         supabase.from("alerts").select("id").eq("is_resolved", false),
       ]);
 
       const totalItems = itemsResult.data?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-      const lowStockItems = itemsResult.data?.filter(
-        item => item.quantity <= item.low_stock_threshold
-      ).length || 0;
+      
+      // Aggregate items by name+department to get accurate low stock count
+      const itemAggregates = new Map<string, { totalQty: number; threshold: number }>();
+      itemsResult.data?.forEach(item => {
+        const key = `${item.department}|${item.name}`;
+        if (!itemAggregates.has(key)) {
+          itemAggregates.set(key, { totalQty: 0, threshold: item.low_stock_threshold || 5 });
+        }
+        itemAggregates.get(key)!.totalQty += item.quantity;
+      });
+      
+      let lowStockItems = 0;
+      itemAggregates.forEach(agg => {
+        if (agg.totalQty <= agg.threshold) lowStockItems++;
+      });
+
       const activeAlerts = alertsResult.data?.length || 0;
 
       setStats({
         totalItems,
         lowStockItems,
-        totalDepartments: 6,
+        totalDepartments: 8,
         activeAlerts,
       });
       setLoading(false);

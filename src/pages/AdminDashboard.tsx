@@ -23,7 +23,7 @@ import {
   UserCheck, Clock, Shield, Edit, Trash2, Search 
 } from "lucide-react";
 
-const DEPARTMENTS = ["IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech"] as const;
+const DEPARTMENTS = ["IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech", "Chemical", "Mechanical"] as const;
 const ITEMS_PER_PAGE = 10;
 
 const AdminDashboard = () => {
@@ -88,11 +88,26 @@ const AdminDashboard = () => {
         return acc;
       }, {} as any);
 
+      // Aggregate items by name+department for accurate low stock count
+      const itemAggregates = new Map<string, { totalQty: number; threshold: number }>();
+      items.forEach(item => {
+        const key = `${item.department}|${item.name}`;
+        if (!itemAggregates.has(key)) {
+          itemAggregates.set(key, { totalQty: 0, threshold: item.low_stock_threshold || 5 });
+        }
+        itemAggregates.get(key)!.totalQty += item.quantity;
+      });
+      
+      let lowStockCount = 0;
+      itemAggregates.forEach(agg => {
+        if (agg.totalQty <= agg.threshold) lowStockCount++;
+      });
+
       setStats({
         totalUsers: users.length,
         pendingRequests: requests.length,
         totalItems: items.length,
-        lowStockItems: items.filter(i => i.quantity < 10).length,
+        lowStockItems: lowStockCount,
         activeAlerts: alerts.length,
         departments: deptStats,
       });

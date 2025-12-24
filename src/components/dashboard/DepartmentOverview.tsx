@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Cpu, Network, Database, Microscope, FlaskConical, Dna } from "lucide-react";
+import { Cpu, Network, Database, Microscope, FlaskConical, Dna, Beaker, Cog } from "lucide-react";
 
 const departmentIcons: Record<string, any> = {
   IT: Cpu,
@@ -12,6 +12,8 @@ const departmentIcons: Record<string, any> = {
   Physics: Microscope,
   Chemistry: FlaskConical,
   "Bio-tech": Dna,
+  Chemical: Beaker,
+  Mechanical: Cog,
 };
 
 interface DepartmentData {
@@ -28,21 +30,36 @@ export function DepartmentOverview() {
     const fetchDepartments = async () => {
       const { data } = await supabase
         .from("inventory_items")
-        .select("department, quantity, low_stock_threshold");
+        .select("department, name, quantity, low_stock_threshold");
 
       if (data) {
         const deptMap = new Map<string, DepartmentData>();
+        // Group items by department and name to aggregate quantities
+        const itemsByDeptAndName = new Map<string, { totalQty: number; threshold: number }>();
         
+        data.forEach((item) => {
+          const key = `${item.department}|${item.name}`;
+          if (!itemsByDeptAndName.has(key)) {
+            itemsByDeptAndName.set(key, { totalQty: 0, threshold: item.low_stock_threshold || 5 });
+          }
+          itemsByDeptAndName.get(key)!.totalQty += item.quantity;
+        });
+
         data.forEach((item) => {
           const dept = item.department;
           if (!deptMap.has(dept)) {
             deptMap.set(dept, { department: dept, totalItems: 0, lowStockCount: 0 });
           }
-          
-          const deptData = deptMap.get(dept)!;
-          deptData.totalItems += item.quantity;
-          if (item.quantity <= item.low_stock_threshold) {
-            deptData.lowStockCount++;
+          deptMap.get(dept)!.totalItems += item.quantity;
+        });
+
+        // Count low stock by unique item names (aggregated quantity vs threshold)
+        const countedItems = new Set<string>();
+        itemsByDeptAndName.forEach((aggItem, key) => {
+          const [dept] = key.split("|");
+          if (!countedItems.has(key) && aggItem.totalQty <= aggItem.threshold) {
+            deptMap.get(dept)!.lowStockCount++;
+            countedItems.add(key);
           }
         });
 
