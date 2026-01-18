@@ -15,7 +15,6 @@ const departmentIcons: Record<string, any> = {
   Chemical: Beaker,
   Mechanical: Cog,
 };
-const ALL_DEPARTMENTS = ["IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech", "Chemical", "Mechanical"];
 
 interface DepartmentData {
   department: string;
@@ -33,13 +32,8 @@ export function DepartmentOverview() {
         .from("inventory_items")
         .select("department, name, quantity, low_stock_threshold");
 
-      // Initialize all departments with zero values
-      const deptMap = new Map<string, DepartmentData>();
-      ALL_DEPARTMENTS.forEach((dept) => {
-        deptMap.set(dept, { department: dept, totalItems: 0, lowStockCount: 0 });
-      });
-
-      if (data && data.length > 0) {
+      if (data) {
+        const deptMap = new Map<string, DepartmentData>();
         // Group items by department and name to aggregate quantities
         const itemsByDeptAndName = new Map<string, { totalQty: number; threshold: number }>();
         
@@ -53,23 +47,24 @@ export function DepartmentOverview() {
 
         data.forEach((item) => {
           const dept = item.department;
-          if (deptMap.has(dept)) {
-            deptMap.get(dept)!.totalItems += item.quantity;
+          if (!deptMap.has(dept)) {
+            deptMap.set(dept, { department: dept, totalItems: 0, lowStockCount: 0 });
           }
+          deptMap.get(dept)!.totalItems += item.quantity;
         });
 
         // Count low stock by unique item names (aggregated quantity vs threshold)
         const countedItems = new Set<string>();
         itemsByDeptAndName.forEach((aggItem, key) => {
           const [dept] = key.split("|");
-          if (!countedItems.has(key) && aggItem.totalQty <= aggItem.threshold && deptMap.has(dept)) {
+          if (!countedItems.has(key) && aggItem.totalQty <= aggItem.threshold) {
             deptMap.get(dept)!.lowStockCount++;
             countedItems.add(key);
           }
         });
-      }
 
-      setDepartments(Array.from(deptMap.values()));
+        setDepartments(Array.from(deptMap.values()));
+      }
     };
 
     fetchDepartments();
