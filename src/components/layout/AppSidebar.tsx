@@ -43,6 +43,8 @@ const departmentItems = [
   { title: "Physics Department", url: "/departments/Physics", icon: Microscope, dept: "Physics" },
   { title: "Chemistry Department", url: "/departments/Chemistry", icon: FlaskConical, dept: "Chemistry" },
   { title: "Bio-tech Department", url: "/departments/Bio-tech", icon: Dna, dept: "Bio-tech" },
+  { title: "Chemical Department", url: "/departments/Chemical", icon: FlaskConical, dept: "Chemical" },
+  { title: "Mechanical Department", url: "/departments/Mechanical", icon: Wrench, dept: "Mechanical" },
 ];
 
 export function AppSidebar() {
