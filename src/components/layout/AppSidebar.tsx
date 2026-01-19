@@ -26,6 +26,7 @@ import {
   Network,
   Shield,
   Wrench,
+  MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -33,6 +34,7 @@ const mainMenuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "Reports", url: "/reports", icon: FileText },
+  { title: "Grievance Box", url: "/grievances", icon: MessageSquare },
   { title: "Profile", url: "/profile", icon: UserCircle },
 ];
 
@@ -132,6 +134,14 @@ export function AppSidebar() {
                     <NavLink to="/services" className={getNavCls}>
                       <Wrench className="h-4 w-4" />
                       {!collapsed && <span>Service Registration</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/admin/grievances" className={getNavCls}>
+                      <MessageSquare className="h-4 w-4" />
+                      {!collapsed && <span>Grievance Management</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
