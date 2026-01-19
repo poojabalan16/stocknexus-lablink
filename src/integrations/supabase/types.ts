@@ -91,6 +91,51 @@ export type Database = {
         }
         Relationships: []
       }
+      grievances: {
+        Row: {
+          attachment_url: string | null
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          priority: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           cabin_number: string | null
