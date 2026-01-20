@@ -265,6 +265,59 @@ export type Database = {
         }
         Relationships: []
       }
+      scrap_items: {
+        Row: {
+          created_at: string
+          department: Database["public"]["Enums"]["department"]
+          id: string
+          item_id: string | null
+          item_model: string | null
+          item_name: string
+          item_serial_number: string | null
+          notes: string | null
+          quantity: number
+          reason: string
+          scrapped_at: string
+          scrapped_by: string
+        }
+        Insert: {
+          created_at?: string
+          department: Database["public"]["Enums"]["department"]
+          id?: string
+          item_id?: string | null
+          item_model?: string | null
+          item_name: string
+          item_serial_number?: string | null
+          notes?: string | null
+          quantity?: number
+          reason: string
+          scrapped_at?: string
+          scrapped_by: string
+        }
+        Update: {
+          created_at?: string
+          department?: Database["public"]["Enums"]["department"]
+          id?: string
+          item_id?: string | null
+          item_model?: string | null
+          item_name?: string
+          item_serial_number?: string | null
+          notes?: string | null
+          quantity?: number
+          reason?: string
+          scrapped_at?: string
+          scrapped_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrap_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           bill_photo_url: string | null
