@@ -145,6 +145,7 @@ export type Database = {
           department: Database["public"]["Enums"]["department"]
           id: string
           image_url: string | null
+          is_working: boolean
           location: string | null
           low_stock_threshold: number | null
           model: string | null
@@ -164,6 +165,7 @@ export type Database = {
           department: Database["public"]["Enums"]["department"]
           id?: string
           image_url?: string | null
+          is_working?: boolean
           location?: string | null
           low_stock_threshold?: number | null
           model?: string | null
@@ -183,6 +185,7 @@ export type Database = {
           department?: Database["public"]["Enums"]["department"]
           id?: string
           image_url?: string | null
+          is_working?: boolean
           location?: string | null
           low_stock_threshold?: number | null
           model?: string | null

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ interface InventoryItem {
   cabin_number: string;
   status: string;
   low_stock_threshold: number;
+  is_working: boolean;
 }
 
 interface ItemSummary {
@@ -46,6 +48,8 @@ const DepartmentDetail = () => {
   const [itemSummaries, setItemSummaries] = useState<ItemSummary[]>([]);
   const [editingCabinId, setEditingCabinId] = useState<string | null>(null);
   const [editingCabinValue, setEditingCabinValue] = useState("");
+
+  const isWorkingStatusDept = department === "IT" || department === "AI&DS" || department === "CSE";
 
   useEffect(() => {
     checkAuth();
@@ -89,16 +93,28 @@ const DepartmentDetail = () => {
     // Apply status filter to summaries
     let summaries = Array.from(summaryMap.values());
     if (statusFilter !== "all") {
-      summaries = summaries.filter(summary => {
-        if (statusFilter === "out_of_stock") return summary.totalQuantity === 0;
-        if (statusFilter === "low_stock") return summary.totalQuantity > 0 && summary.totalQuantity <= summary.lowStockThreshold;
-        if (statusFilter === "in_stock") return summary.totalQuantity > summary.lowStockThreshold;
-        return true;
-      });
+      if (isWorkingStatusDept) {
+        // For IT, CSE, AI&DS - filter by working status
+        summaries = summaries.filter(summary => {
+          if (statusFilter === "working") return summary.items.every(item => item.is_working);
+          if (statusFilter === "not_working") return summary.items.some(item => !item.is_working);
+          if (statusFilter === "low_stock") return summary.totalQuantity > 0 && summary.totalQuantity <= summary.lowStockThreshold;
+          if (statusFilter === "in_stock") return summary.totalQuantity > summary.lowStockThreshold;
+          return true;
+        });
+      } else {
+        // For other departments - standard stock filters
+        summaries = summaries.filter(summary => {
+          if (statusFilter === "out_of_stock") return summary.totalQuantity === 0;
+          if (statusFilter === "low_stock") return summary.totalQuantity > 0 && summary.totalQuantity <= summary.lowStockThreshold;
+          if (statusFilter === "in_stock") return summary.totalQuantity > summary.lowStockThreshold;
+          return true;
+        });
+      }
     }
     
     setItemSummaries(summaries);
-  }, [searchQuery, items, statusFilter]);
+  }, [searchQuery, items, statusFilter, isWorkingStatusDept]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -172,6 +188,26 @@ const DepartmentDetail = () => {
   const handleCabinCancel = () => {
     setEditingCabinId(null);
     setEditingCabinValue("");
+  };
+
+  const handleWorkingStatusChange = async (itemId: string, isWorking: boolean) => {
+    if (!canManageItems()) return;
+    
+    try {
+      const { error } = await supabase
+        .from("inventory_items")
+        .update({ is_working: isWorking })
+        .eq("id", itemId);
+
+      if (error) throw error;
+
+      setItems(items.map(item => 
+        item.id === itemId ? { ...item, is_working: isWorking } : item
+      ));
+      toast.success(`Item marked as ${isWorking ? "working" : "not working"}`);
+    } catch (error: any) {
+      toast.error("Failed to update working status");
+    }
   };
 
   const getStatusBadge = (summary: ItemSummary) => {
@@ -253,7 +289,14 @@ const DepartmentDetail = () => {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="in_stock">In Stock</SelectItem>
                     <SelectItem value="low_stock">Low Stock</SelectItem>
-                    <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                    {isWorkingStatusDept ? (
+                      <>
+                        <SelectItem value="working">Working</SelectItem>
+                        <SelectItem value="not_working">Not Working</SelectItem>
+                      </>
+                    ) : (
+                      <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -310,8 +353,11 @@ const DepartmentDetail = () => {
                               <TableHead>Serial Number</TableHead>
                               <TableHead>Model</TableHead>
                               <TableHead>Qty</TableHead>
-                              {(department === "IT" || department === "AI&DS" || department === "CSE") && (
-                                <TableHead>Cabin Number</TableHead>
+                              {isWorkingStatusDept && (
+                                <>
+                                  <TableHead>Cabin Number</TableHead>
+                                  <TableHead>Status</TableHead>
+                                </>
                               )}
                               <TableHead>Location</TableHead>
                               <TableHead>Actions</TableHead>
@@ -325,46 +371,60 @@ const DepartmentDetail = () => {
                                 </TableCell>
                                 <TableCell>{item.model || "-"}</TableCell>
                                 <TableCell>{item.quantity}</TableCell>
-                                {(department === "IT" || department === "AI&DS" || department === "CSE") && (
-                                  <TableCell>
-                                    {editingCabinId === item.id ? (
-                                      <div className="flex items-center gap-1">
-                                        <Input
-                                          value={editingCabinValue}
-                                          onChange={(e) => setEditingCabinValue(e.target.value)}
-                                          className="h-8 w-24"
-                                          autoFocus
-                                          onKeyDown={(e) => {
-                                            if (e.key === "Enter") handleCabinSave(item.id);
-                                            if (e.key === "Escape") handleCabinCancel();
-                                          }}
+                                {isWorkingStatusDept && (
+                                  <>
+                                    <TableCell>
+                                      {editingCabinId === item.id ? (
+                                        <div className="flex items-center gap-1">
+                                          <Input
+                                            value={editingCabinValue}
+                                            onChange={(e) => setEditingCabinValue(e.target.value)}
+                                            className="h-8 w-24"
+                                            autoFocus
+                                            onKeyDown={(e) => {
+                                              if (e.key === "Enter") handleCabinSave(item.id);
+                                              if (e.key === "Escape") handleCabinCancel();
+                                            }}
+                                          />
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => handleCabinSave(item.id)}
+                                          >
+                                            <Check className="h-4 w-4 text-success" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={handleCabinCancel}
+                                          >
+                                            <X className="h-4 w-4 text-destructive" />
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <span
+                                          className={canManageItems() ? "cursor-pointer hover:underline" : ""}
+                                          onClick={() => canManageItems() && handleCabinEdit(item)}
+                                        >
+                                          {item.cabin_number || "-"}
+                                        </span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center gap-2">
+                                        <Switch
+                                          checked={item.is_working}
+                                          onCheckedChange={(checked) => handleWorkingStatusChange(item.id, checked)}
+                                          disabled={!canManageItems()}
                                         />
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7"
-                                          onClick={() => handleCabinSave(item.id)}
-                                        >
-                                          <Check className="h-4 w-4 text-success" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7"
-                                          onClick={handleCabinCancel}
-                                        >
-                                          <X className="h-4 w-4 text-destructive" />
-                                        </Button>
+                                        <Badge variant={item.is_working ? "default" : "destructive"} className={item.is_working ? "bg-success" : ""}>
+                                          {item.is_working ? "Working" : "Not Working"}
+                                        </Badge>
                                       </div>
-                                    ) : (
-                                      <span
-                                        className={canManageItems() ? "cursor-pointer hover:underline" : ""}
-                                        onClick={() => canManageItems() && handleCabinEdit(item)}
-                                      >
-                                        {item.cabin_number || "-"}
-                                      </span>
-                                    )}
-                                  </TableCell>
+                                    </TableCell>
+                                  </>
                                 )}
                                 <TableCell>{item.location || "-"}</TableCell>
                                 <TableCell>
