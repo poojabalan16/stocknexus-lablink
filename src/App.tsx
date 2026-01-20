@@ -19,6 +19,7 @@ import AddService from "./pages/AddService";
 import ServiceDetail from "./pages/ServiceDetail";
 import Grievances from "./pages/Grievances";
 import AdminGrievances from "./pages/AdminGrievances";
+import ScrapManagement from "./pages/ScrapManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/services/:id" element={<ServiceDetail />} />
           <Route path="/grievances" element={<Grievances />} />
           <Route path="/admin/grievances" element={<AdminGrievances />} />
+          <Route path="/scrap" element={<ScrapManagement />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

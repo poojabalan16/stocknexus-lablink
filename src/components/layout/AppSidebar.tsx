@@ -27,6 +27,7 @@ import {
   Shield,
   Wrench,
   MessageSquare,
+  Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -54,6 +55,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userDepartment, setUserDepartment] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -61,12 +63,13 @@ export function AppSidebar() {
       if (user) {
         const { data: roles } = await supabase
           .from("user_roles")
-          .select("role")
+          .select("role, department")
           .eq("user_id", user.id)
           .single();
         
         if (roles) {
           setUserRole(roles.role);
+          setUserDepartment(roles.department);
         }
       }
     };
@@ -142,6 +145,32 @@ export function AppSidebar() {
                     <NavLink to="/admin/grievances" className={getNavCls}>
                       <MessageSquare className="h-4 w-4" />
                       {!collapsed && <span>Grievance Management</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/scrap" className={getNavCls}>
+                      <Trash2 className="h-4 w-4" />
+                      {!collapsed && <span>Scrap Management</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {userRole === "hod" && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Management</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/scrap" className={getNavCls}>
+                      <Trash2 className="h-4 w-4" />
+                      {!collapsed && <span>Scrap Management</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
