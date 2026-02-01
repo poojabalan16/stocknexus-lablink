@@ -76,9 +76,40 @@ const AddService = () => {
 
   // Filter equipment by selected department
   const selectedDepartment = form.watch("department");
+  const selectedEquipmentId = form.watch("equipment_id");
   const filteredEquipment = equipment?.filter(
     (item) => item.department === selectedDepartment
   );
+
+  // Get selected equipment's category
+  const selectedEquipment = equipment?.find((item) => item.id === selectedEquipmentId);
+  const equipmentCategory = selectedEquipment?.category?.toLowerCase() || "";
+
+  // Get nature of service options based on equipment category
+  const getNatureOfServiceOptions = () => {
+    if (equipmentCategory.includes("computer") || equipmentCategory.includes("electronic")) {
+      return [
+        { value: "maintenance", label: "Maintenance" },
+        { value: "repair", label: "Repair" },
+        { value: "installation", label: "Installation" },
+      ];
+    } else if (equipmentCategory.includes("lab") || equipmentCategory.includes("equipment")) {
+      return [
+        { value: "calibration", label: "Calibration" },
+        { value: "maintenance", label: "Maintenance" },
+        { value: "repair", label: "Repair" },
+      ];
+    }
+    // Default: all options
+    return [
+      { value: "maintenance", label: "Maintenance" },
+      { value: "repair", label: "Repair" },
+      { value: "calibration", label: "Calibration" },
+      { value: "installation", label: "Installation" },
+    ];
+  };
+
+  const natureOfServiceOptions = getNatureOfServiceOptions();
 
   const handleBillPhotoChange = (file: File | null) => {
     if (file) {
@@ -270,17 +301,22 @@ const AddService = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Nature of Service</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={!selectedEquipmentId}
+                        >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select nature of service" />
+                              <SelectValue placeholder={selectedEquipmentId ? "Select nature of service" : "Select equipment first"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="maintenance">Maintenance</SelectItem>
-                            <SelectItem value="repair">Repair</SelectItem>
-                            <SelectItem value="calibration">Calibration</SelectItem>
-                            <SelectItem value="installation">Installation</SelectItem>
+                            {natureOfServiceOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
