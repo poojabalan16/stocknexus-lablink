@@ -76,9 +76,65 @@ const AddService = () => {
 
   // Filter equipment by selected department
   const selectedDepartment = form.watch("department");
+  const selectedEquipmentId = form.watch("equipment_id");
   const filteredEquipment = equipment?.filter(
     (item) => item.department === selectedDepartment
   );
+
+  // Get selected equipment's category
+  const selectedEquipment = equipment?.find((item) => item.id === selectedEquipmentId);
+  const selectedCategory = selectedEquipment?.category?.toLowerCase() || "";
+
+  // Define nature of service options based on equipment category
+  const getNatureOfServiceOptions = () => {
+    const isComputerOrElectronics = 
+      selectedCategory.includes("computer") || 
+      selectedCategory.includes("electronic") ||
+      selectedCategory.includes("laptop") ||
+      selectedCategory.includes("desktop") ||
+      selectedCategory.includes("printer") ||
+      selectedCategory.includes("monitor");
+    
+    const isLabEquipment = 
+      selectedCategory.includes("lab") || 
+      selectedCategory.includes("instrument") ||
+      selectedCategory.includes("measuring") ||
+      selectedCategory.includes("scientific") ||
+      selectedCategory.includes("microscope") ||
+      selectedCategory.includes("spectro");
+
+    if (isComputerOrElectronics) {
+      return [
+        { value: "maintenance", label: "Maintenance" },
+        { value: "repair", label: "Repair" },
+        { value: "installation", label: "Installation" },
+      ];
+    }
+    
+    if (isLabEquipment) {
+      return [
+        { value: "calibration", label: "Calibration" },
+        { value: "maintenance", label: "Maintenance" },
+        { value: "repair", label: "Repair" },
+      ];
+    }
+
+    // Default: all options
+    return [
+      { value: "maintenance", label: "Maintenance" },
+      { value: "repair", label: "Repair" },
+      { value: "calibration", label: "Calibration" },
+      { value: "installation", label: "Installation" },
+    ];
+  };
+
+  const natureOfServiceOptions = getNatureOfServiceOptions();
+
+  // Reset nature of service when equipment changes
+  const handleEquipmentChange = (value: string) => {
+    form.setValue("equipment_id", value);
+    form.setValue("nature_of_service", undefined as any); // Reset nature of service
+  };
 
   const handleBillPhotoChange = (file: File | null) => {
     if (file) {
@@ -242,8 +298,8 @@ const AddService = () => {
                       <FormItem>
                         <FormLabel>Equipment</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          onValueChange={handleEquipmentChange}
+                          value={field.value}
                           disabled={!selectedDepartment}
                         >
                           <FormControl>
@@ -270,17 +326,22 @@ const AddService = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Nature of Service</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={!selectedEquipmentId}
+                        >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select nature of service" />
+                              <SelectValue placeholder={selectedEquipmentId ? "Select nature of service" : "Select equipment first"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="maintenance">Maintenance</SelectItem>
-                            <SelectItem value="repair">Repair</SelectItem>
-                            <SelectItem value="calibration">Calibration</SelectItem>
-                            <SelectItem value="installation">Installation</SelectItem>
+                            {natureOfServiceOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
