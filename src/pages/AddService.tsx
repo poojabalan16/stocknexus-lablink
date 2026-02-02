@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,9 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Package, Layers } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -28,21 +28,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   service_type: z.enum(["internal", "external"], {
     required_error: "Please select a service type",
   }),
   department: z.string().min(1, "Please select a department"),
-  category: z.string().min(1, "Please select an equipment category"),
-  service_scope: z.enum(["single", "bulk"], {
-    required_error: "Please select service scope",
-  }),
-  equipment_id: z.string().optional(),
+  equipment_id: z.string().min(1, "Please select an equipment"),
   nature_of_service: z.enum(["maintenance", "repair", "calibration", "installation"], {
     required_error: "Please select nature of service",
   }),
@@ -52,14 +45,6 @@ const formSchema = z.object({
   cost: z.string().optional(),
   remarks: z.string().optional(),
   bill_photo: z.instanceof(File).optional(),
-}).refine((data) => {
-  if (data.service_scope === "single" && !data.equipment_id) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Please select an equipment item",
-  path: ["equipment_id"],
 });
 
 const AddService = () => {
@@ -72,7 +57,6 @@ const AddService = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       status: "pending",
-      service_scope: "single",
     },
   });
 
@@ -82,7 +66,7 @@ const AddService = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inventory_items")
-        .select("id, name, category, department, model, serial_number")
+        .select("id, name, category, department")
         .order("name");
 
       if (error) throw error;
@@ -90,56 +74,34 @@ const AddService = () => {
     },
   });
 
+  // Filter equipment by selected department
   const selectedDepartment = form.watch("department");
-  const selectedCategory = form.watch("category");
-  const serviceScope = form.watch("service_scope");
   const selectedEquipmentId = form.watch("equipment_id");
+  const filteredEquipment = equipment?.filter(
+    (item) => item.department === selectedDepartment
+  );
 
-  // Get unique categories for selected department
-  const categories = useMemo(() => {
-    if (!equipment || !selectedDepartment) return [];
-    const deptEquipment = equipment.filter(item => item.department === selectedDepartment);
-    const uniqueCategories = [...new Set(deptEquipment.map(item => item.category).filter(Boolean))];
-    return uniqueCategories.sort();
-  }, [equipment, selectedDepartment]);
-
-  // Get equipment items for selected department and category
-  const filteredEquipment = useMemo(() => {
-    if (!equipment || !selectedDepartment || !selectedCategory) return [];
-    return equipment.filter(
-      item => item.department === selectedDepartment && item.category === selectedCategory
-    );
-  }, [equipment, selectedDepartment, selectedCategory]);
-
-  // Get count for bulk display
-  const equipmentCount = filteredEquipment.length;
+  // Get selected equipment's category
+  const selectedEquipment = equipment?.find((item) => item.id === selectedEquipmentId);
+  const selectedCategory = selectedEquipment?.category?.toLowerCase() || "";
 
   // Define nature of service options based on equipment category
   const getNatureOfServiceOptions = () => {
-    const categoryLower = selectedCategory?.toLowerCase() || "";
-    
     const isComputerOrElectronics = 
-      categoryLower.includes("computer") || 
-      categoryLower.includes("electronic") ||
-      categoryLower.includes("laptop") ||
-      categoryLower.includes("desktop") ||
-      categoryLower.includes("printer") ||
-      categoryLower.includes("monitor") ||
-      categoryLower.includes("cpu") ||
-      categoryLower.includes("keyboard") ||
-      categoryLower.includes("mouse") ||
-      categoryLower.includes("ups") ||
-      categoryLower.includes("network");
+      selectedCategory.includes("computer") || 
+      selectedCategory.includes("electronic") ||
+      selectedCategory.includes("laptop") ||
+      selectedCategory.includes("desktop") ||
+      selectedCategory.includes("printer") ||
+      selectedCategory.includes("monitor");
     
     const isLabEquipment = 
-      categoryLower.includes("lab") || 
-      categoryLower.includes("instrument") ||
-      categoryLower.includes("measuring") ||
-      categoryLower.includes("scientific") ||
-      categoryLower.includes("microscope") ||
-      categoryLower.includes("spectro") ||
-      categoryLower.includes("chemical") ||
-      categoryLower.includes("apparatus");
+      selectedCategory.includes("lab") || 
+      selectedCategory.includes("instrument") ||
+      selectedCategory.includes("measuring") ||
+      selectedCategory.includes("scientific") ||
+      selectedCategory.includes("microscope") ||
+      selectedCategory.includes("spectro");
 
     if (isComputerOrElectronics) {
       return [
@@ -157,6 +119,7 @@ const AddService = () => {
       ];
     }
 
+    // Default: all options
     return [
       { value: "maintenance", label: "Maintenance" },
       { value: "repair", label: "Repair" },
@@ -167,18 +130,10 @@ const AddService = () => {
 
   const natureOfServiceOptions = getNatureOfServiceOptions();
 
-  // Reset dependent fields when parent selection changes
-  const handleDepartmentChange = (value: string) => {
-    form.setValue("department", value);
-    form.setValue("category", "");
-    form.setValue("equipment_id", "");
-    form.setValue("nature_of_service", undefined as any);
-  };
-
-  const handleCategoryChange = (value: string) => {
-    form.setValue("category", value);
-    form.setValue("equipment_id", "");
-    form.setValue("nature_of_service", undefined as any);
+  // Reset nature of service when equipment changes
+  const handleEquipmentChange = (value: string) => {
+    form.setValue("equipment_id", value);
+    form.setValue("nature_of_service", undefined as any); // Reset nature of service
   };
 
   const handleBillPhotoChange = (file: File | null) => {
@@ -230,29 +185,16 @@ const AddService = () => {
         billPhotoUrl = urlData.publicUrl;
       }
 
-      // For bulk service, use the first equipment in category as reference
-      // In a real implementation, you might want to create a separate bulk_services table
-      let equipmentId = values.equipment_id;
-      if (values.service_scope === "bulk" && filteredEquipment.length > 0) {
-        equipmentId = filteredEquipment[0].id;
-      }
-
-      if (!equipmentId) {
-        throw new Error("No equipment found for this category");
-      }
-
       const serviceData = {
         service_type: values.service_type,
         department: values.department as Database["public"]["Enums"]["department"],
-        equipment_id: equipmentId,
+        equipment_id: values.equipment_id,
         nature_of_service: values.nature_of_service,
         service_date: values.service_date,
         status: values.status,
         technician_vendor_name: values.technician_vendor_name,
         cost: values.cost ? parseFloat(values.cost) : null,
-        remarks: values.service_scope === "bulk" 
-          ? `[BULK SERVICE - ${selectedCategory}] ${values.remarks || ''}`
-          : values.remarks,
+        remarks: values.remarks,
         bill_photo_url: billPhotoUrl,
         created_by: userData.user.id,
       };
@@ -263,9 +205,7 @@ const AddService = () => {
 
       toast({
         title: "Success",
-        description: values.service_scope === "bulk" 
-          ? `Bulk service registered for ${equipmentCount} items in ${selectedCategory}`
-          : "Service registered successfully",
+        description: "Service registered successfully",
       });
 
       navigate("/services");
@@ -295,15 +235,13 @@ const AddService = () => {
           </div>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Step 1: Basic Service Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Service Information</CardTitle>
-                <CardDescription>Select the type and department for this service</CardDescription>
-              </CardHeader>
-              <CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -311,15 +249,15 @@ const AddService = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Service Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select service type" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="internal">Internal (In-house)</SelectItem>
-                            <SelectItem value="external">External (Vendor)</SelectItem>
+                            <SelectItem value="internal">Internal</SelectItem>
+                            <SelectItem value="external">External</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -333,7 +271,7 @@ const AddService = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Department</FormLabel>
-                        <Select onValueChange={handleDepartmentChange} value={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select department" />
@@ -346,353 +284,216 @@ const AddService = () => {
                             <SelectItem value="Physics">Physics</SelectItem>
                             <SelectItem value="Chemistry">Chemistry</SelectItem>
                             <SelectItem value="Bio-tech">Bio-tech</SelectItem>
-                            <SelectItem value="Chemical">Chemical</SelectItem>
-                            <SelectItem value="Mechanical">Mechanical</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="equipment_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Equipment</FormLabel>
+                        <Select
+                          onValueChange={handleEquipmentChange}
+                          value={field.value}
+                          disabled={!selectedDepartment}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select equipment" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {filteredEquipment?.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name} - {item.category}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="nature_of_service"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nature of Service</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={!selectedEquipmentId}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={selectedEquipmentId ? "Select nature of service" : "Select equipment first"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {natureOfServiceOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="service_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Service Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="technician_vendor_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Technician/Vendor Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="cost"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cost (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="Enter cost"
+                            {...field}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Step 2: Equipment Selection */}
-            {selectedDepartment && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Equipment Selection</CardTitle>
-                  <CardDescription>Choose the equipment category and scope of service</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Equipment Category</FormLabel>
-                        <Select onValueChange={handleCategoryChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select equipment category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map((category) => {
-                              const count = equipment?.filter(
-                                e => e.department === selectedDepartment && e.category === category
-                              ).length || 0;
-                              return (
-                                <SelectItem key={category} value={category!}>
-                                  {category} <span className="text-muted-foreground ml-2">({count} items)</span>
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {selectedCategory && (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="service_scope"
-                        render={({ field }) => (
-                          <FormItem className="space-y-3">
-                            <FormLabel>Service Scope</FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={field.onChange}
-                                value={field.value}
-                                className="grid grid-cols-2 gap-4"
-                              >
-                                <div>
-                                  <RadioGroupItem
-                                    value="single"
-                                    id="single"
-                                    className="peer sr-only"
-                                  />
-                                  <Label
-                                    htmlFor="single"
-                                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                                  >
-                                    <Package className="mb-3 h-6 w-6" />
-                                    <span className="font-semibold">Single Item</span>
-                                    <span className="text-xs text-muted-foreground mt-1">
-                                      Service a specific equipment
-                                    </span>
-                                  </Label>
-                                </div>
-                                <div>
-                                  <RadioGroupItem
-                                    value="bulk"
-                                    id="bulk"
-                                    className="peer sr-only"
-                                  />
-                                  <Label
-                                    htmlFor="bulk"
-                                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                                  >
-                                    <Layers className="mb-3 h-6 w-6" />
-                                    <span className="font-semibold">Bulk Service</span>
-                                    <span className="text-xs text-muted-foreground mt-1">
-                                      Service all {equipmentCount} items
-                                    </span>
-                                  </Label>
-                                </div>
-                              </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {serviceScope === "single" && (
-                        <FormField
-                          control={form.control}
-                          name="equipment_id"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Select Equipment</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select specific equipment" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {filteredEquipment.map((item) => (
-                                    <SelectItem key={item.id} value={item.id}>
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-medium">{item.name}</span>
-                                        {item.model && (
-                                          <Badge variant="outline" className="text-xs">
-                                            {item.model}
-                                          </Badge>
-                                        )}
-                                        {item.serial_number && (
-                                          <span className="text-muted-foreground text-xs">
-                                            SN: {item.serial_number}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                Choose the specific equipment item that needs service
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                <FormField
+                  control={form.control}
+                  name="remarks"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Remarks (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Enter any additional remarks"
+                          {...field}
                         />
-                      )}
-
-                      {serviceScope === "bulk" && (
-                        <div className="rounded-lg border bg-muted/50 p-4">
-                          <p className="text-sm font-medium mb-2">Bulk Service Summary</p>
-                          <p className="text-sm text-muted-foreground">
-                            This service will be registered for all <strong>{equipmentCount}</strong> items 
-                            in the <strong>{selectedCategory}</strong> category of <strong>{selectedDepartment}</strong> department.
-                          </p>
-                        </div>
-                      )}
-                    </>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </CardContent>
-              </Card>
-            )}
+                />
 
-            {/* Step 3: Service Details */}
-            {selectedCategory && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Service Details</CardTitle>
-                  <CardDescription>Provide details about the service</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="nature_of_service"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nature of Service</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select nature of service" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {natureOfServiceOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="service_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Service Date</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="in_progress">In Progress</SelectItem>
-                              <SelectItem value="completed">Completed</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="technician_vendor_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Technician/Vendor Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="cost"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cost (Optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="Enter cost"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="mt-6">
-                    <FormField
-                      control={form.control}
-                      name="remarks"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Remarks (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Enter any additional remarks"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="mt-6 space-y-2">
-                    <Label htmlFor="bill-photo">Bill Photo / Receipt (Optional)</Label>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        <Input
-                          id="bill-photo"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleBillPhotoChange(e.target.files?.[0] || null)}
-                          className="flex-1"
-                        />
-                        {billPhotoPreview && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              handleBillPhotoChange(null);
-                              const input = document.getElementById("bill-photo") as HTMLInputElement;
-                              if (input) input.value = "";
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        )}
-                      </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bill-photo">Bill Photo / Receipt (Optional)</Label>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        id="bill-photo"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleBillPhotoChange(e.target.files?.[0] || null)}
+                        className="flex-1"
+                      />
                       {billPhotoPreview && (
-                        <div className="rounded-lg border p-4">
-                          <img
-                            src={billPhotoPreview}
-                            alt="Bill preview"
-                            className="max-h-64 mx-auto rounded-lg"
-                          />
-                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            handleBillPhotoChange(null);
+                            const input = document.getElementById("bill-photo") as HTMLInputElement;
+                            if (input) input.value = "";
+                          }}
+                        >
+                          Remove
+                        </Button>
                       )}
-                      <p className="text-xs text-muted-foreground">
-                        Upload a photo of the service bill or receipt (Max 5MB)
-                      </p>
                     </div>
+                    {billPhotoPreview && (
+                      <div className="rounded-lg border p-4">
+                        <img
+                          src={billPhotoPreview}
+                          alt="Bill preview"
+                          className="max-h-64 mx-auto rounded-lg"
+                        />
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Upload a photo of the service bill or receipt (Max 5MB)
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
 
-            {/* Submit Buttons */}
-            {selectedCategory && (
-              <div className="flex gap-4">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Registering..." : "Register Service"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/services")}
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
-          </form>
-        </Form>
+                <div className="flex gap-4">
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Registering..." : "Register Service"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/services")}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
