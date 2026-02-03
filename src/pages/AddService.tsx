@@ -35,11 +35,7 @@ const formSchema = z.object({
     required_error: "Please select a service type",
   }),
   department: z.string().min(1, "Please select a department"),
-  category: z.string().min(1, "Please select a category"),
-  service_scope: z.enum(["single", "bulk"], {
-    required_error: "Please select service scope",
-  }),
-  equipment_id: z.string().optional(),
+  equipment_id: z.string().min(1, "Please select an equipment"),
   nature_of_service: z.enum(["maintenance", "repair", "calibration", "installation"], {
     required_error: "Please select nature of service",
   }),
@@ -49,14 +45,6 @@ const formSchema = z.object({
   cost: z.string().optional(),
   remarks: z.string().optional(),
   bill_photo: z.instanceof(File).optional(),
-}).refine((data) => {
-  if (data.service_scope === "single" && !data.equipment_id) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Please select an equipment for single item service",
-  path: ["equipment_id"],
 });
 
 const AddService = () => {
@@ -69,7 +57,6 @@ const AddService = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       status: "pending",
-      service_scope: "single",
     },
   });
 
@@ -87,40 +74,11 @@ const AddService = () => {
     },
   });
 
-  // Watch form values for cascading dropdowns
+  // Filter equipment by selected department
   const selectedDepartment = form.watch("department");
-  const selectedCategory = form.watch("category");
-  const serviceScope = form.watch("service_scope");
-
-  // Get unique categories for selected department
-  const categories = equipment
-    ?.filter((item) => item.department === selectedDepartment)
-    .map((item) => item.category)
-    .filter((cat, idx, arr) => cat && arr.indexOf(cat) === idx) || [];
-
-  // Filter equipment by department and category
   const filteredEquipment = equipment?.filter(
-    (item) => item.department === selectedDepartment && item.category === selectedCategory
+    (item) => item.department === selectedDepartment
   );
-
-  // Reset dependent fields when parent changes
-  const handleDepartmentChange = (value: string) => {
-    form.setValue("department", value);
-    form.setValue("category", "");
-    form.setValue("equipment_id", "");
-  };
-
-  const handleCategoryChange = (value: string) => {
-    form.setValue("category", value);
-    form.setValue("equipment_id", "");
-  };
-
-  const handleServiceScopeChange = (value: "single" | "bulk") => {
-    form.setValue("service_scope", value);
-    if (value === "bulk") {
-      form.setValue("equipment_id", "");
-    }
-  };
 
   const handleBillPhotoChange = (file: File | null) => {
     if (file) {
@@ -171,54 +129,27 @@ const AddService = () => {
         billPhotoUrl = urlData.publicUrl;
       }
 
-      // For bulk service, create service records for all items in the category
-      if (values.service_scope === "bulk") {
-        const itemsInCategory = filteredEquipment || [];
-        
-        if (itemsInCategory.length === 0) {
-          throw new Error("No equipment found in the selected category");
-        }
+      const serviceData = {
+        service_type: values.service_type,
+        department: values.department as Database["public"]["Enums"]["department"],
+        equipment_id: values.equipment_id,
+        nature_of_service: values.nature_of_service,
+        service_date: values.service_date,
+        status: values.status,
+        technician_vendor_name: values.technician_vendor_name,
+        cost: values.cost ? parseFloat(values.cost) : null,
+        remarks: values.remarks,
+        bill_photo_url: billPhotoUrl,
+        created_by: userData.user.id,
+      };
 
-        const serviceRecords = itemsInCategory.map((item) => ({
-          service_type: values.service_type,
-          department: values.department as Database["public"]["Enums"]["department"],
-          equipment_id: item.id,
-          nature_of_service: values.nature_of_service,
-          service_date: values.service_date,
-          status: values.status,
-          technician_vendor_name: values.technician_vendor_name,
-          cost: values.cost ? parseFloat(values.cost) / itemsInCategory.length : null,
-          remarks: values.remarks ? `[Bulk Service] ${values.remarks}` : "[Bulk Service]",
-          bill_photo_url: billPhotoUrl,
-          created_by: userData.user.id,
-        }));
+      const { error } = await supabase.from("services").insert([serviceData]);
 
-        const { error } = await supabase.from("services").insert(serviceRecords);
-        if (error) throw error;
-      } else {
-        const serviceData = {
-          service_type: values.service_type,
-          department: values.department as Database["public"]["Enums"]["department"],
-          equipment_id: values.equipment_id,
-          nature_of_service: values.nature_of_service,
-          service_date: values.service_date,
-          status: values.status,
-          technician_vendor_name: values.technician_vendor_name,
-          cost: values.cost ? parseFloat(values.cost) : null,
-          remarks: values.remarks,
-          bill_photo_url: billPhotoUrl,
-          created_by: userData.user.id,
-        };
-
-        const { error } = await supabase.from("services").insert([serviceData]);
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
-        description: values.service_scope === "bulk" 
-          ? `Bulk service registered for ${filteredEquipment?.length || 0} items`
-          : "Service registered successfully",
+        description: "Service registered successfully",
       });
 
       navigate("/services");
@@ -284,7 +215,7 @@ const AddService = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Department</FormLabel>
-                        <Select onValueChange={handleDepartmentChange} value={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select department" />
@@ -297,8 +228,6 @@ const AddService = () => {
                             <SelectItem value="Physics">Physics</SelectItem>
                             <SelectItem value="Chemistry">Chemistry</SelectItem>
                             <SelectItem value="Bio-tech">Bio-tech</SelectItem>
-                            <SelectItem value="Chemical">Chemical</SelectItem>
-                            <SelectItem value="Mechanical">Mechanical</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -308,24 +237,24 @@ const AddService = () => {
 
                   <FormField
                     control={form.control}
-                    name="category"
+                    name="equipment_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Equipment Category</FormLabel>
+                        <FormLabel>Equipment</FormLabel>
                         <Select
-                          onValueChange={handleCategoryChange}
-                          value={field.value}
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
                           disabled={!selectedDepartment}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
+                              <SelectValue placeholder="Select equipment" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category} value={category as string}>
-                                {category}
+                            {filteredEquipment?.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name} - {item.category}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -334,68 +263,6 @@ const AddService = () => {
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="service_scope"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Service Scope</FormLabel>
-                        <Select
-                          onValueChange={handleServiceScopeChange}
-                          value={field.value}
-                          disabled={!selectedCategory}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select scope" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="single">Single Item</SelectItem>
-                            <SelectItem value="bulk">Bulk Service (All items in category)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {serviceScope === "bulk" && filteredEquipment && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            This will create service records for {filteredEquipment.length} items
-                          </p>
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {serviceScope === "single" && (
-                    <FormField
-                      control={form.control}
-                      name="equipment_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Equipment</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            disabled={!selectedCategory}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select equipment" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {filteredEquipment?.map((item) => (
-                                <SelectItem key={item.id} value={item.id}>
-                                  {item.name} {item.category ? `- ${item.category}` : ""}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
 
                   <FormField
                     control={form.control}
