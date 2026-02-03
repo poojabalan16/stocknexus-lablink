@@ -56,6 +56,7 @@ const ScrapManagement = () => {
   const [userDepartment, setUserDepartment] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<string>("");
   const [scrapQuantity, setScrapQuantity] = useState<string>("1");
   const [scrapReason, setScrapReason] = useState("");
@@ -223,11 +224,16 @@ const ScrapManagement = () => {
   };
 
   const resetForm = () => {
+    setSelectedDepartment(userRole === "hod" ? userDepartment || "all" : "all");
     setSelectedItem("");
     setScrapQuantity("1");
     setScrapReason("");
     setScrapNotes("");
   };
+
+  const filteredInventoryItems = inventoryItems.filter(item => 
+    selectedDepartment === "all" || item.department === selectedDepartment
+  );
 
   const filteredScrapItems = scrapItems.filter(item => {
     const matchesSearch = 
@@ -285,6 +291,26 @@ const ScrapManagement = () => {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
+                {userRole === "admin" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Filter by Department</Label>
+                    <Select value={selectedDepartment} onValueChange={(val) => {
+                      setSelectedDepartment(val);
+                      setSelectedItem("");
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Departments" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Departments</SelectItem>
+                        {departments.map(dept => (
+                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="item">Select Item *</Label>
                   <Select value={selectedItem} onValueChange={setSelectedItem}>
@@ -292,7 +318,7 @@ const ScrapManagement = () => {
                       <SelectValue placeholder="Select an item" />
                     </SelectTrigger>
                     <SelectContent>
-                      {inventoryItems.map(item => (
+                      {filteredInventoryItems.map(item => (
                         <SelectItem key={item.id} value={item.id}>
                           {item.name} {item.serial_number ? `(${item.serial_number})` : ""} - {item.department} (Qty: {item.quantity})
                         </SelectItem>
