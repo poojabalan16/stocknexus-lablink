@@ -49,34 +49,40 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-6">
-      <SidebarTrigger />
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border/50 glass-strong px-6">
+      <SidebarTrigger className="hover:bg-primary/10 transition-smooth rounded-lg" />
       
       <div className="flex-1" />
 
+      {/* Quick Stats Badge */}
+      <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20">
+        <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+        <span className="text-xs font-medium text-accent">System Online</span>
+      </div>
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar>
-              <AvatarFallback className="bg-primary text-primary-foreground">
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-smooth ring-2 ring-transparent hover:ring-primary/20">
+            <Avatar className="h-10 w-10 border-2 border-primary/20">
+              <AvatarFallback className="gradient-primary text-primary-foreground font-semibold">
                 {userName ? userName.charAt(0).toUpperCase() : "U"}
               </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-56 glass-strong border-border/50 shadow-lg">
           <DropdownMenuLabel>
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">{userName || "User"}</p>
+              <p className="text-sm font-semibold">{userName || "User"}</p>
               <p className="text-xs text-muted-foreground">Manage your account</p>
             </div>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate("/profile")}>
+          <DropdownMenuSeparator className="bg-border/50" />
+          <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer transition-smooth hover:bg-primary/10">
             <UserIcon className="mr-2 h-4 w-4" />
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive hover:bg-destructive/10 transition-smooth">
             <LogOut className="mr-2 h-4 w-4" />
             Logout
           </DropdownMenuItem>

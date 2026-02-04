@@ -1,89 +1,130 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Package, ChevronRight, Shield, BarChart3, Users } from "lucide-react";
+import { Package, ChevronRight, Shield, BarChart3, Users, Sparkles, ArrowRight } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Animated background gradient */}
-      <div className="absolute inset-0 gradient-hero animate-pulse-slow" />
+      {/* Enhanced animated background */}
+      <div className="absolute inset-0 gradient-mesh" />
+      <div className="absolute inset-0 gradient-hero opacity-50" />
       
-      {/* Decorative elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "1s" }} />
+      {/* Floating orbs */}
+      <div className="absolute top-20 left-[10%] w-80 h-80 bg-primary/20 rounded-full blur-[100px] animate-pulse-slow" />
+      <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-accent/15 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: "1.5s" }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px]" />
       
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-8">
-        <div className="max-w-5xl w-full">
+      {/* Grid pattern overlay */}
+      <div className="absolute inset-0 opacity-[0.015]" style={{
+        backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
+        backgroundSize: '60px 60px'
+      }} />
+      
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-6 md:p-8">
+        <div className="max-w-6xl w-full">
           {/* Hero Section */}
-          <div className="text-center space-y-8 animate-fade-in">
-            <div className="inline-flex items-center justify-center p-4 rounded-2xl bg-card/80 backdrop-blur-sm shadow-lg hover-glow mb-6">
-              <Package className="h-16 w-16 text-primary" />
+          <div className="text-center space-y-8 animate-in">
+            {/* Logo */}
+            <div className="inline-flex items-center justify-center p-5 rounded-2xl glass shadow-lg hover-glow group cursor-default">
+              <Package className="h-14 w-14 text-primary group-hover:scale-110 transition-bounce" />
             </div>
             
-            <h1 className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent">
-              StockNexus
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border-primary/20 text-sm font-medium text-primary">
+              <Sparkles className="h-4 w-4" />
+              Enterprise Inventory Management
+            </div>
+            
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight">
+              <span className="gradient-text">StockNexus</span>
             </h1>
             
-            <p className="text-2xl text-muted-foreground max-w-2xl mx-auto text-balance">
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto text-balance leading-relaxed">
               Professional Laboratory Inventory Management System
             </p>
             
-            <p className="text-lg text-muted-foreground/80 max-w-xl mx-auto">
+            <p className="text-base md:text-lg text-muted-foreground/70 max-w-xl mx-auto leading-relaxed">
               Streamline your lab operations with real-time tracking, automated alerts, and comprehensive reporting
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
               <Button 
                 onClick={() => navigate("/auth")} 
                 size="lg" 
-                className="group gradient-primary hover:shadow-glow transition-smooth text-lg px-8"
+                className="group text-base px-8 h-14"
               >
                 Get Started
-                <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="ml-1 h-5 w-5 group-hover:translate-x-1 transition-smooth" />
               </Button>
               <Button 
                 onClick={() => navigate("/auth")} 
                 size="lg" 
                 variant="outline"
-                className="text-lg px-8 hover-lift"
+                className="text-base px-8 h-14 group"
               >
                 Sign In
+                <ArrowRight className="ml-1 h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-smooth" />
               </Button>
             </div>
           </div>
 
           {/* Features Grid */}
-          <div className="grid md:grid-cols-3 gap-6 mt-20 animate-slide-up">
-            <div className="bg-card/80 backdrop-blur-sm rounded-xl p-6 shadow-md hover-lift hover-glow">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg gradient-primary mb-4">
-                <Shield className="h-6 w-6 text-primary-foreground" />
+          <div className="grid md:grid-cols-3 gap-6 mt-24">
+            {[
+              {
+                icon: Shield,
+                title: "Secure & Reliable",
+                description: "Enterprise-grade security with role-based access control",
+                gradient: "gradient-primary",
+                delay: "0s"
+              },
+              {
+                icon: BarChart3,
+                title: "Real-time Analytics",
+                description: "Track inventory levels and generate insights instantly",
+                gradient: "gradient-accent",
+                delay: "0.1s"
+              },
+              {
+                icon: Users,
+                title: "Team Collaboration",
+                description: "Seamless multi-user support with department management",
+                gradient: "gradient-primary",
+                delay: "0.2s"
+              }
+            ].map((feature, index) => (
+              <div 
+                key={feature.title}
+                className="group glass rounded-2xl p-8 hover-lift hover-glow cursor-default animate-in"
+                style={{ animationDelay: feature.delay }}
+              >
+                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl ${feature.gradient} shadow-lg mb-6 group-hover:scale-110 transition-bounce`}>
+                  <feature.icon className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Secure & Reliable</h3>
-              <p className="text-muted-foreground">
-                Enterprise-grade security with role-based access control
-              </p>
-            </div>
+            ))}
+          </div>
 
-            <div className="bg-card/80 backdrop-blur-sm rounded-xl p-6 shadow-md hover-lift hover-glow" style={{ animationDelay: "0.1s" }}>
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg gradient-accent mb-4">
-                <BarChart3 className="h-6 w-6 text-accent-foreground" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Real-time Analytics</h3>
-              <p className="text-muted-foreground">
-                Track inventory levels and generate insights instantly
-              </p>
+          {/* Bottom Trust Indicators */}
+          <div className="flex flex-wrap items-center justify-center gap-8 mt-20 pt-8 border-t border-border/30">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+              Real-time Sync
             </div>
-
-            <div className="bg-card/80 backdrop-blur-sm rounded-xl p-6 shadow-md hover-lift hover-glow" style={{ animationDelay: "0.2s" }}>
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-warning mb-4">
-                <Users className="h-6 w-6 text-warning-foreground" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Team Collaboration</h3>
-              <p className="text-muted-foreground">
-                Seamless multi-user support with department management
-              </p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Shield className="h-4 w-4" />
+              Bank-grade Security
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <BarChart3 className="h-4 w-4" />
+              Advanced Analytics
             </div>
           </div>
         </div>

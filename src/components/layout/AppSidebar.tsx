@@ -84,25 +84,39 @@ export function AppSidebar() {
       : "hover:bg-sidebar-accent/50";
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"}>
-      <SidebarContent>
-        <div className="p-6">
-          <div className="flex items-center gap-2">
-            <Package className="h-8 w-8 text-primary" />
-            {!collapsed && <span className="text-xl font-bold text-primary">StockNexus</span>}
+    <Sidebar className={`${collapsed ? "w-14" : "w-64"} border-r border-sidebar-border/50`}>
+      <SidebarContent className="scrollbar-thin">
+        {/* Logo Section */}
+        <div className="p-6 border-b border-sidebar-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl gradient-primary shadow-md">
+              <Package className="h-5 w-5 text-primary-foreground" />
+            </div>
+            {!collapsed && (
+              <div className="flex flex-col">
+                <span className="text-lg font-bold gradient-text">StockNexus</span>
+                <span className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">Inventory System</span>
+              </div>
+            )}
           </div>
         </div>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
+        <SidebarGroup className="pt-4">
+          <SidebarGroupLabel className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider px-4">Main Menu</SidebarGroupLabel>
+          <SidebarGroupContent className="px-2">
             <SidebarMenu>
               {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
+                  <SidebarMenuButton asChild className="rounded-lg transition-smooth">
+                    <NavLink to={item.url} end className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-smooth ${
+                        isActive 
+                          ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
+                          : "hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground"
+                      }`
+                    }>
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -112,47 +126,77 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {userRole === "admin" && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
-            <SidebarGroupContent>
+          <SidebarGroup className="pt-2">
+            <SidebarGroupLabel className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider px-4">Administration</SidebarGroupLabel>
+            <SidebarGroupContent className="px-2">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/admin" className={getNavCls}>
+                  <SidebarMenuButton asChild className="rounded-lg transition-smooth">
+                    <NavLink to="/admin" className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-smooth ${
+                        isActive 
+                          ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
+                          : "hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground"
+                      }`
+                    }>
                       <Shield className="h-4 w-4" />
-                      {!collapsed && <span>Admin Dashboard</span>}
+                      {!collapsed && <span className="text-sm">Admin Dashboard</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/users" className={getNavCls}>
+                  <SidebarMenuButton asChild className="rounded-lg transition-smooth">
+                    <NavLink to="/users" className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-smooth ${
+                        isActive 
+                          ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
+                          : "hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground"
+                      }`
+                    }>
                       <Users className="h-4 w-4" />
-                      {!collapsed && <span>User Management</span>}
+                      {!collapsed && <span className="text-sm">User Management</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/services" className={getNavCls}>
+                  <SidebarMenuButton asChild className="rounded-lg transition-smooth">
+                    <NavLink to="/services" className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-smooth ${
+                        isActive 
+                          ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
+                          : "hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground"
+                      }`
+                    }>
                       <Wrench className="h-4 w-4" />
-                      {!collapsed && <span>Service Registration</span>}
+                      {!collapsed && <span className="text-sm">Service Registration</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/admin/grievances" className={getNavCls}>
+                  <SidebarMenuButton asChild className="rounded-lg transition-smooth">
+                    <NavLink to="/admin/grievances" className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-smooth ${
+                        isActive 
+                          ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
+                          : "hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground"
+                      }`
+                    }>
                       <MessageSquare className="h-4 w-4" />
-                      {!collapsed && <span>Grievance Management</span>}
+                      {!collapsed && <span className="text-sm">Grievance Management</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/scrap" className={getNavCls}>
+                  <SidebarMenuButton asChild className="rounded-lg transition-smooth">
+                    <NavLink to="/scrap" className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-smooth ${
+                        isActive 
+                          ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
+                          : "hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground"
+                      }`
+                    }>
                       <Trash2 className="h-4 w-4" />
-                      {!collapsed && <span>Scrap Management</span>}
+                      {!collapsed && <span className="text-sm">Scrap Management</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -162,15 +206,21 @@ export function AppSidebar() {
         )}
 
         {userRole === "hod" && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Management</SidebarGroupLabel>
-            <SidebarGroupContent>
+          <SidebarGroup className="pt-2">
+            <SidebarGroupLabel className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider px-4">Management</SidebarGroupLabel>
+            <SidebarGroupContent className="px-2">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/scrap" className={getNavCls}>
+                  <SidebarMenuButton asChild className="rounded-lg transition-smooth">
+                    <NavLink to="/scrap" className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-smooth ${
+                        isActive 
+                          ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
+                          : "hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground"
+                      }`
+                    }>
                       <Trash2 className="h-4 w-4" />
-                      {!collapsed && <span>Scrap Management</span>}
+                      {!collapsed && <span className="text-sm">Scrap Management</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -179,16 +229,22 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Departments</SidebarGroupLabel>
-          <SidebarGroupContent>
+        <SidebarGroup className="pt-2">
+          <SidebarGroupLabel className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider px-4">Departments</SidebarGroupLabel>
+          <SidebarGroupContent className="px-2">
             <SidebarMenu>
               {departmentItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls}>
+                  <SidebarMenuButton asChild className="rounded-lg transition-smooth">
+                    <NavLink to={item.url} className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-smooth ${
+                        isActive 
+                          ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
+                          : "hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground"
+                      }`
+                    }>
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
