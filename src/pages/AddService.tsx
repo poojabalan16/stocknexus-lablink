@@ -89,7 +89,7 @@ const AddService = () => {
   const [billPhotoPreview, setBillPhotoPreview] = useState<string | null>(null);
   const [vendorSearchOpen, setVendorSearchOpen] = useState(false);
   const [equipmentSearchOpen, setEquipmentSearchOpen] = useState(false);
-
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -135,9 +135,25 @@ const AddService = () => {
   const selectedDepartment = form.watch("department");
   const selectedEquipmentId = form.watch("equipment_id");
   
-  const filteredEquipment = useMemo(() => 
+  // Get unique categories from department-filtered equipment
+  const departmentEquipment = useMemo(() => 
     equipment?.filter((item) => item.department === selectedDepartment) || [],
     [equipment, selectedDepartment]
+  );
+
+  const availableCategories = useMemo(() => {
+    const categories = departmentEquipment
+      .map((item) => item.category)
+      .filter((cat): cat is string => !!cat);
+    return [...new Set(categories)].sort();
+  }, [departmentEquipment]);
+
+  // Filter equipment by category
+  const filteredEquipment = useMemo(() => 
+    selectedCategory 
+      ? departmentEquipment.filter((item) => item.category === selectedCategory)
+      : [],
+    [departmentEquipment, selectedCategory]
   );
 
   const selectedEquipment = useMemo(() => 
@@ -445,71 +461,114 @@ const AddService = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Department <span className="text-destructive">*</span></FormLabel>
-                        <Select 
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue("equipment_id", ""); // Reset equipment when department changes
-                          }} 
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select department" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {departments.map((dept) => (
-                              <SelectItem key={dept} value={dept}>
-                                {dept}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {/* Row 1: Department */}
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Department <span className="text-destructive">*</span></FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedCategory(""); // Reset category when department changes
+                          form.setValue("equipment_id", ""); // Reset equipment when department changes
+                        }} 
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select department" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept} value={dept}>
+                              {dept}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
+                {/* Row 2: Category and Item Details */}
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Item Category Dropdown */}
+                  <div className="space-y-2">
+                    <Label htmlFor="item-category">
+                      Item Category <span className="text-destructive">*</span>
+                    </Label>
+                    <Select 
+                      value={selectedCategory}
+                      onValueChange={(value) => {
+                        setSelectedCategory(value);
+                        form.setValue("equipment_id", ""); // Reset item when category changes
+                      }}
+                      disabled={!selectedDepartment}
+                    >
+                      <SelectTrigger id="item-category" className={cn(!selectedDepartment && "opacity-50")}>
+                        <SelectValue placeholder={selectedDepartment ? "Select item category" : "Select department first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCategories.length > 0 ? (
+                          availableCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            No categories available
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {!selectedDepartment && (
+                      <p className="text-sm text-muted-foreground">Select a department first</p>
+                    )}
+                  </div>
+
+                  {/* Item Details / Model Dropdown */}
                   <FormField
                     control={form.control}
                     name="equipment_id"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Equipment Item <span className="text-destructive">*</span></FormLabel>
+                        <FormLabel>Item Details / Model <span className="text-destructive">*</span></FormLabel>
                         <Popover open={equipmentSearchOpen} onOpenChange={setEquipmentSearchOpen}>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
                                 variant="outline"
                                 role="combobox"
-                                disabled={!selectedDepartment}
+                                disabled={!selectedCategory}
                                 className={cn(
                                   "w-full justify-between h-10 font-normal",
-                                  !field.value && "text-muted-foreground"
+                                  !field.value && "text-muted-foreground",
+                                  !selectedCategory && "opacity-50"
                                 )}
                               >
                                 {selectedEquipment ? (
-                                  <span className="truncate">{selectedEquipment.name}</span>
+                                  <span className="truncate">
+                                    {selectedEquipment.name}
+                                    {selectedEquipment.model && ` - ${selectedEquipment.model}`}
+                                  </span>
                                 ) : (
-                                  "Search equipment..."
+                                  selectedCategory ? "Search items..." : "Select category first"
                                 )}
                                 <Package className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-full p-0" align="start">
+                          <PopoverContent className="w-[400px] p-0" align="start">
                             <Command>
-                              <CommandInput placeholder="Search equipment..." />
+                              <CommandInput placeholder="Search by name, model, or serial..." />
                               <CommandList>
-                                <CommandEmpty>No equipment found.</CommandEmpty>
-                                <CommandGroup>
+                                <CommandEmpty>No items found in this category.</CommandEmpty>
+                                <CommandGroup heading={`${selectedCategory} Items (${filteredEquipment.length})`}>
                                   {filteredEquipment.map((item) => (
                                     <CommandItem
                                       key={item.id}
@@ -518,12 +577,16 @@ const AddService = () => {
                                         field.onChange(item.id);
                                         setEquipmentSearchOpen(false);
                                       }}
+                                      className="flex flex-col items-start py-3"
                                     >
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">{item.name}</span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {item.category} {item.model && `• ${item.model}`}
-                                        </span>
+                                      <span className="font-medium">{item.name}</span>
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                        {item.model && (
+                                          <span className="bg-muted px-1.5 py-0.5 rounded">{item.model}</span>
+                                        )}
+                                        {item.serial_number && (
+                                          <span>S/N: {item.serial_number}</span>
+                                        )}
                                       </div>
                                     </CommandItem>
                                   ))}
@@ -532,8 +595,8 @@ const AddService = () => {
                             </Command>
                           </PopoverContent>
                         </Popover>
-                        {!selectedDepartment && (
-                          <FormDescription>Select a department first</FormDescription>
+                        {!selectedCategory && (
+                          <FormDescription>Select a category first</FormDescription>
                         )}
                         <FormMessage />
                       </FormItem>
