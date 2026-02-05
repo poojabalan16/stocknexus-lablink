@@ -57,23 +57,16 @@ const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        {/* Enhanced Hero Header */}
-        <div className="relative overflow-hidden rounded-2xl glass border-primary/10 p-8">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-background p-8 border border-primary/20">
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              <span className="text-sm font-medium text-accent">Live Dashboard</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-3">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
               Dashboard
             </h1>
-            <p className="text-muted-foreground text-lg max-w-xl">
+            <p className="text-muted-foreground mt-2 text-lg">
               Welcome back! Here's an overview of your inventory system.
             </p>
           </div>
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-72 h-72 bg-primary/10 rounded-full blur-[80px] -z-0" />
-          <div className="absolute bottom-0 right-20 w-48 h-48 bg-accent/10 rounded-full blur-[60px] -z-0" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-0" />
         </div>
 
         <DashboardStats />
