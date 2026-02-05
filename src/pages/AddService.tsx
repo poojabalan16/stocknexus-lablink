@@ -496,7 +496,10 @@ const AddService = () => {
                                 )}
                               >
                                 {selectedEquipment ? (
-                                  <span className="truncate">{selectedEquipment.name}</span>
+                                  <span className="truncate">
+                                    {selectedEquipment.name}
+                                    {selectedEquipment.serial_number && ` (${selectedEquipment.serial_number})`}
+                                  </span>
                                 ) : (
                                   "Search equipment..."
                                 )}
@@ -520,9 +523,14 @@ const AddService = () => {
                                       }}
                                     >
                                       <div className="flex flex-col">
-                                        <span className="font-medium">{item.name}</span>
+                                        <span className="font-medium">
+                                          {item.name}
+                                          {item.serial_number && (
+                                            <span className="text-muted-foreground font-normal"> ({item.serial_number})</span>
+                                          )}
+                                        </span>
                                         <span className="text-xs text-muted-foreground">
-                                          {item.category} {item.model && `• ${item.model}`}
+                                          {item.model && `${item.model}`}
                                         </span>
                                       </div>
                                     </CommandItem>
