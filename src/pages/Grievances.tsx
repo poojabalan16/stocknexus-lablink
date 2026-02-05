@@ -35,6 +35,8 @@ const Grievances = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("medium");
+  const [courseId, setCourseId] = useState("");
+  const [courseName, setCourseName] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -98,6 +100,8 @@ const Grievances = () => {
         title,
         description,
         priority,
+        course_id: courseId || null,
+        course_name: courseName || null,
         attachment_url: attachmentUrl,
         created_by: user.id,
       });
@@ -111,6 +115,8 @@ const Grievances = () => {
       setTitle("");
       setDescription("");
       setPriority("medium");
+      setCourseId("");
+      setCourseName("");
       setAttachment(null);
     },
     onError: (error: Error) => {
@@ -220,6 +226,26 @@ const Grievances = () => {
                       rows={4}
                       required
                     />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="courseId">Course ID</Label>
+                      <Input
+                        id="courseId"
+                        placeholder="e.g., CS101"
+                        value={courseId}
+                        onChange={(e) => setCourseId(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="courseName">Course Name</Label>
+                      <Input
+                        id="courseName"
+                        placeholder="e.g., Introduction to Programming"
+                        value={courseName}
+                        onChange={(e) => setCourseName(e.target.value)}
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>
