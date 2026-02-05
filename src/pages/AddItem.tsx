@@ -20,6 +20,7 @@ const AddItem = () => {
   const [userDepartment, setUserDepartment] = useState<string | null>(null);
 
   // Form state
+  const [itemCategory, setItemCategory] = useState("");
   const [name, setName] = useState("");
   const [model, setModel] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
@@ -29,6 +30,106 @@ const AddItem = () => {
   const [cabinNumber, setCabinNumber] = useState("");
   const [department, setDepartment] = useState("");
   const [specifications, setSpecifications] = useState("");
+
+  // Category to items mapping
+  const categoryItemsMap: Record<string, { name: string; model: string }[]> = {
+    CPU: [
+      { name: "Intel Core i3", model: "i3-12100" },
+      { name: "Intel Core i5", model: "i5-12400" },
+      { name: "Intel Core i7", model: "i7-12700" },
+      { name: "Intel Core i9", model: "i9-12900K" },
+      { name: "AMD Ryzen 5", model: "5600X" },
+      { name: "AMD Ryzen 7", model: "7700X" },
+      { name: "AMD Ryzen 9", model: "9900X" },
+    ],
+    Monitor: [
+      { name: "LED Monitor 19\"", model: "19-inch LED" },
+      { name: "LED Monitor 22\"", model: "22-inch LED" },
+      { name: "LED Monitor 24\"", model: "24-inch LED" },
+      { name: "LED Monitor 27\"", model: "27-inch LED" },
+      { name: "Curved Monitor 32\"", model: "32-inch Curved" },
+    ],
+    Keyboard: [
+      { name: "Wired Keyboard", model: "USB Standard" },
+      { name: "Wireless Keyboard", model: "Bluetooth" },
+      { name: "Mechanical Keyboard", model: "Cherry MX" },
+      { name: "Ergonomic Keyboard", model: "Split Design" },
+    ],
+    Mouse: [
+      { name: "Wired Mouse", model: "USB Optical" },
+      { name: "Wireless Mouse", model: "Bluetooth" },
+      { name: "Gaming Mouse", model: "RGB Optical" },
+      { name: "Ergonomic Mouse", model: "Vertical Design" },
+    ],
+    Printer: [
+      { name: "Inkjet Printer", model: "Color Inkjet" },
+      { name: "Laser Printer", model: "Mono Laser" },
+      { name: "Color Laser Printer", model: "Color Laser" },
+      { name: "All-in-One Printer", model: "MFP" },
+      { name: "Dot Matrix Printer", model: "24-Pin" },
+    ],
+    Laptop: [
+      { name: "Dell Laptop", model: "Latitude 5420" },
+      { name: "HP Laptop", model: "ProBook 450" },
+      { name: "Lenovo Laptop", model: "ThinkPad E14" },
+      { name: "Acer Laptop", model: "Aspire 5" },
+      { name: "ASUS Laptop", model: "VivoBook 15" },
+    ],
+    Desktop: [
+      { name: "Dell Desktop", model: "OptiPlex 3090" },
+      { name: "HP Desktop", model: "ProDesk 400" },
+      { name: "Lenovo Desktop", model: "ThinkCentre M70" },
+      { name: "Assembled Desktop", model: "Custom Build" },
+    ],
+    Projector: [
+      { name: "LCD Projector", model: "3000 Lumens" },
+      { name: "DLP Projector", model: "4000 Lumens" },
+      { name: "Laser Projector", model: "5000 Lumens" },
+      { name: "Interactive Projector", model: "Touch Enabled" },
+    ],
+    UPS: [
+      { name: "UPS 600VA", model: "600VA/360W" },
+      { name: "UPS 1000VA", model: "1KVA/600W" },
+      { name: "UPS 1500VA", model: "1.5KVA/900W" },
+      { name: "UPS 3000VA", model: "3KVA/1800W" },
+    ],
+    "Lab Equipment": [
+      { name: "Microscope", model: "Binocular" },
+      { name: "Centrifuge", model: "High Speed" },
+      { name: "Spectrophotometer", model: "UV-Visible" },
+      { name: "pH Meter", model: "Digital" },
+      { name: "Hot Plate", model: "Magnetic Stirrer" },
+    ],
+    Furniture: [
+      { name: "Office Chair", model: "Ergonomic" },
+      { name: "Office Desk", model: "Standard" },
+      { name: "File Cabinet", model: "4-Drawer" },
+      { name: "Bookshelf", model: "5-Tier" },
+    ],
+    Networking: [
+      { name: "Router", model: "Gigabit" },
+      { name: "Switch", model: "24-Port" },
+      { name: "Access Point", model: "Dual Band" },
+      { name: "Network Cable", model: "Cat6" },
+    ],
+  };
+
+  const itemCategories = Object.keys(categoryItemsMap);
+  const availableItems = itemCategory ? categoryItemsMap[itemCategory] || [] : [];
+
+  const handleCategoryChange = (category: string) => {
+    setItemCategory(category);
+    setName("");
+    setModel("");
+  };
+
+  const handleItemSelect = (selectedName: string) => {
+    const selectedItem = availableItems.find(item => item.name === selectedName);
+    if (selectedItem) {
+      setName(selectedItem.name);
+      setModel(selectedItem.model);
+    }
+  };
 
   // Bulk import state
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -287,25 +388,65 @@ const AddItem = () => {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2 col-span-2">
-                      <Label htmlFor="name">Item Name *</Label>
-                      <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Dell Laptop"
-                        required
-                      />
+                    <div className="space-y-2">
+                      <Label htmlFor="itemCategory">Item Category *</Label>
+                      <Select 
+                        value={itemCategory} 
+                        onValueChange={handleCategoryChange}
+                      >
+                        <SelectTrigger id="itemCategory">
+                          <SelectValue placeholder="Select item category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border shadow-lg z-50">
+                          {itemCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="model">Model</Label>
+                      <Label htmlFor="itemName">Item Name / Model *</Label>
+                      <Select 
+                        value={name} 
+                        onValueChange={handleItemSelect}
+                        disabled={!itemCategory}
+                      >
+                        <SelectTrigger id="itemName" className={!itemCategory ? "opacity-50" : ""}>
+                          <SelectValue placeholder={itemCategory ? "Select item" : "Select category first"} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border shadow-lg z-50">
+                          {availableItems.map((item) => (
+                            <SelectItem key={item.name} value={item.name}>
+                              {item.name} ({item.model})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {!itemCategory && (
+                        <p className="text-xs text-muted-foreground">
+                          Please select an item category first
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="model">Model (Auto-filled)</Label>
                       <Input
                         id="model"
                         value={model}
                         onChange={(e) => setModel(e.target.value)}
-                        placeholder="Latitude 5420"
+                        placeholder="Auto-filled from selection"
+                        readOnly={!!itemCategory}
+                        className={itemCategory ? "bg-muted" : ""}
                       />
+                      {itemCategory && (
+                        <p className="text-xs text-muted-foreground">
+                          Model is auto-filled based on item selection
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
