@@ -94,6 +94,8 @@ export type Database = {
       grievances: {
         Row: {
           attachment_url: string | null
+          course_id: string | null
+          course_name: string | null
           created_at: string
           created_by: string
           description: string
@@ -108,6 +110,8 @@ export type Database = {
         }
         Insert: {
           attachment_url?: string | null
+          course_id?: string | null
+          course_name?: string | null
           created_at?: string
           created_by: string
           description: string
@@ -122,6 +126,8 @@ export type Database = {
         }
         Update: {
           attachment_url?: string | null
+          course_id?: string | null
+          course_name?: string | null
           created_at?: string
           created_by?: string
           description?: string
