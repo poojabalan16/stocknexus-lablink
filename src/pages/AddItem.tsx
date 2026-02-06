@@ -22,7 +22,6 @@ const AddItem = () => {
   // Form state
   const [itemCategory, setItemCategory] = useState("");
   const [name, setName] = useState("");
-  const [model, setModel] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [lowStockThreshold, setLowStockThreshold] = useState("5");
@@ -32,85 +31,85 @@ const AddItem = () => {
   const [specifications, setSpecifications] = useState("");
 
   // Category to items mapping
-  const categoryItemsMap: Record<string, { name: string; model: string }[]> = {
+  const categoryItemsMap: Record<string, { name: string; serialNumber: string }[]> = {
     CPU: [
-      { name: "Intel Core i3", model: "i3-12100" },
-      { name: "Intel Core i5", model: "i5-12400" },
-      { name: "Intel Core i7", model: "i7-12700" },
-      { name: "Intel Core i9", model: "i9-12900K" },
-      { name: "AMD Ryzen 5", model: "5600X" },
-      { name: "AMD Ryzen 7", model: "7700X" },
-      { name: "AMD Ryzen 9", model: "9900X" },
+      { name: "Intel Core i3", serialNumber: "CPU-001" },
+      { name: "Intel Core i5", serialNumber: "CPU-002" },
+      { name: "Intel Core i7", serialNumber: "CPU-003" },
+      { name: "Intel Core i9", serialNumber: "CPU-004" },
+      { name: "AMD Ryzen 5", serialNumber: "CPU-005" },
+      { name: "AMD Ryzen 7", serialNumber: "CPU-006" },
+      { name: "AMD Ryzen 9", serialNumber: "CPU-007" },
     ],
     Monitor: [
-      { name: "LED Monitor 19\"", model: "19-inch LED" },
-      { name: "LED Monitor 22\"", model: "22-inch LED" },
-      { name: "LED Monitor 24\"", model: "24-inch LED" },
-      { name: "LED Monitor 27\"", model: "27-inch LED" },
-      { name: "Curved Monitor 32\"", model: "32-inch Curved" },
+      { name: "LED Monitor 19\"", serialNumber: "MON-001" },
+      { name: "LED Monitor 22\"", serialNumber: "MON-002" },
+      { name: "LED Monitor 24\"", serialNumber: "MON-003" },
+      { name: "LED Monitor 27\"", serialNumber: "MON-004" },
+      { name: "Curved Monitor 32\"", serialNumber: "MON-005" },
     ],
     Keyboard: [
-      { name: "Wired Keyboard", model: "USB Standard" },
-      { name: "Wireless Keyboard", model: "Bluetooth" },
-      { name: "Mechanical Keyboard", model: "Cherry MX" },
-      { name: "Ergonomic Keyboard", model: "Split Design" },
+      { name: "Wired Keyboard", serialNumber: "KEY-001" },
+      { name: "Wireless Keyboard", serialNumber: "KEY-002" },
+      { name: "Mechanical Keyboard", serialNumber: "KEY-003" },
+      { name: "Ergonomic Keyboard", serialNumber: "KEY-004" },
     ],
     Mouse: [
-      { name: "Wired Mouse", model: "USB Optical" },
-      { name: "Wireless Mouse", model: "Bluetooth" },
-      { name: "Gaming Mouse", model: "RGB Optical" },
-      { name: "Ergonomic Mouse", model: "Vertical Design" },
+      { name: "Wired Mouse", serialNumber: "MOU-001" },
+      { name: "Wireless Mouse", serialNumber: "MOU-002" },
+      { name: "Gaming Mouse", serialNumber: "MOU-003" },
+      { name: "Ergonomic Mouse", serialNumber: "MOU-004" },
     ],
     Printer: [
-      { name: "Inkjet Printer", model: "Color Inkjet" },
-      { name: "Laser Printer", model: "Mono Laser" },
-      { name: "Color Laser Printer", model: "Color Laser" },
-      { name: "All-in-One Printer", model: "MFP" },
-      { name: "Dot Matrix Printer", model: "24-Pin" },
+      { name: "Inkjet Printer", serialNumber: "PRT-001" },
+      { name: "Laser Printer", serialNumber: "PRT-002" },
+      { name: "Color Laser Printer", serialNumber: "PRT-003" },
+      { name: "All-in-One Printer", serialNumber: "PRT-004" },
+      { name: "Dot Matrix Printer", serialNumber: "PRT-005" },
     ],
     Laptop: [
-      { name: "Dell Laptop", model: "Latitude 5420" },
-      { name: "HP Laptop", model: "ProBook 450" },
-      { name: "Lenovo Laptop", model: "ThinkPad E14" },
-      { name: "Acer Laptop", model: "Aspire 5" },
-      { name: "ASUS Laptop", model: "VivoBook 15" },
+      { name: "Dell Laptop", serialNumber: "LAP-001" },
+      { name: "HP Laptop", serialNumber: "LAP-002" },
+      { name: "Lenovo Laptop", serialNumber: "LAP-003" },
+      { name: "Acer Laptop", serialNumber: "LAP-004" },
+      { name: "ASUS Laptop", serialNumber: "LAP-005" },
     ],
     Desktop: [
-      { name: "Dell Desktop", model: "OptiPlex 3090" },
-      { name: "HP Desktop", model: "ProDesk 400" },
-      { name: "Lenovo Desktop", model: "ThinkCentre M70" },
-      { name: "Assembled Desktop", model: "Custom Build" },
+      { name: "Dell Desktop", serialNumber: "DSK-001" },
+      { name: "HP Desktop", serialNumber: "DSK-002" },
+      { name: "Lenovo Desktop", serialNumber: "DSK-003" },
+      { name: "Assembled Desktop", serialNumber: "DSK-004" },
     ],
     Projector: [
-      { name: "LCD Projector", model: "3000 Lumens" },
-      { name: "DLP Projector", model: "4000 Lumens" },
-      { name: "Laser Projector", model: "5000 Lumens" },
-      { name: "Interactive Projector", model: "Touch Enabled" },
+      { name: "LCD Projector", serialNumber: "PRJ-001" },
+      { name: "DLP Projector", serialNumber: "PRJ-002" },
+      { name: "Laser Projector", serialNumber: "PRJ-003" },
+      { name: "Interactive Projector", serialNumber: "PRJ-004" },
     ],
     UPS: [
-      { name: "UPS 600VA", model: "600VA/360W" },
-      { name: "UPS 1000VA", model: "1KVA/600W" },
-      { name: "UPS 1500VA", model: "1.5KVA/900W" },
-      { name: "UPS 3000VA", model: "3KVA/1800W" },
+      { name: "UPS 600VA", serialNumber: "UPS-001" },
+      { name: "UPS 1000VA", serialNumber: "UPS-002" },
+      { name: "UPS 1500VA", serialNumber: "UPS-003" },
+      { name: "UPS 3000VA", serialNumber: "UPS-004" },
     ],
     "Lab Equipment": [
-      { name: "Microscope", model: "Binocular" },
-      { name: "Centrifuge", model: "High Speed" },
-      { name: "Spectrophotometer", model: "UV-Visible" },
-      { name: "pH Meter", model: "Digital" },
-      { name: "Hot Plate", model: "Magnetic Stirrer" },
+      { name: "Microscope", serialNumber: "LAB-001" },
+      { name: "Centrifuge", serialNumber: "LAB-002" },
+      { name: "Spectrophotometer", serialNumber: "LAB-003" },
+      { name: "pH Meter", serialNumber: "LAB-004" },
+      { name: "Hot Plate", serialNumber: "LAB-005" },
     ],
     Furniture: [
-      { name: "Office Chair", model: "Ergonomic" },
-      { name: "Office Desk", model: "Standard" },
-      { name: "File Cabinet", model: "4-Drawer" },
-      { name: "Bookshelf", model: "5-Tier" },
+      { name: "Office Chair", serialNumber: "FUR-001" },
+      { name: "Office Desk", serialNumber: "FUR-002" },
+      { name: "File Cabinet", serialNumber: "FUR-003" },
+      { name: "Bookshelf", serialNumber: "FUR-004" },
     ],
     Networking: [
-      { name: "Router", model: "Gigabit" },
-      { name: "Switch", model: "24-Port" },
-      { name: "Access Point", model: "Dual Band" },
-      { name: "Network Cable", model: "Cat6" },
+      { name: "Router", serialNumber: "NET-001" },
+      { name: "Switch", serialNumber: "NET-002" },
+      { name: "Access Point", serialNumber: "NET-003" },
+      { name: "Network Cable", serialNumber: "NET-004" },
     ],
   };
 
@@ -120,14 +119,14 @@ const AddItem = () => {
   const handleCategoryChange = (category: string) => {
     setItemCategory(category);
     setName("");
-    setModel("");
+    setSerialNumber("");
   };
 
   const handleItemSelect = (selectedName: string) => {
     const selectedItem = availableItems.find(item => item.name === selectedName);
     if (selectedItem) {
       setName(selectedItem.name);
-      setModel(selectedItem.model);
+      setSerialNumber(selectedItem.serialNumber);
     }
   };
 
@@ -190,7 +189,6 @@ const AddItem = () => {
         .from("inventory_items")
         .insert({
           name,
-          model: model || null,
           serial_number: serialNumber || null,
           quantity: parseInt(quantity),
           low_stock_threshold: parseInt(lowStockThreshold),
@@ -408,7 +406,7 @@ const AddItem = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="itemName">Item Name / Model *</Label>
+                      <Label htmlFor="itemName">Item Name *</Label>
                       <Select 
                         value={name} 
                         onValueChange={handleItemSelect}
@@ -420,7 +418,7 @@ const AddItem = () => {
                         <SelectContent className="bg-background border shadow-lg z-50">
                           {availableItems.map((item) => (
                             <SelectItem key={item.name} value={item.name}>
-                              {item.name} ({item.model})
+                              {item.name} ({item.serialNumber})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -433,30 +431,20 @@ const AddItem = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="model">Model (Auto-filled)</Label>
+                      <Label htmlFor="serial">Serial Number (Auto-filled)</Label>
                       <Input
-                        id="model"
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
+                        id="serial"
+                        value={serialNumber}
+                        onChange={(e) => setSerialNumber(e.target.value)}
                         placeholder="Auto-filled from selection"
                         readOnly={!!itemCategory}
                         className={itemCategory ? "bg-muted" : ""}
                       />
                       {itemCategory && (
                         <p className="text-xs text-muted-foreground">
-                          Model is auto-filled based on item selection
+                          Serial number is auto-filled based on item selection
                         </p>
                       )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="serial">Serial Number</Label>
-                      <Input
-                        id="serial"
-                        value={serialNumber}
-                        onChange={(e) => setSerialNumber(e.target.value)}
-                        placeholder="ABC123XYZ"
-                      />
                     </div>
 
                     <div className="space-y-2">
