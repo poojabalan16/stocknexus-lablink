@@ -30,91 +30,34 @@ const AddItem = () => {
   const [department, setDepartment] = useState("");
   const [specifications, setSpecifications] = useState("");
 
-  // Category to items mapping
-  const categoryItemsMap: Record<string, { name: string; serialNumber: string }[]> = {
-    CPU: [
-      { name: "Intel Core i3", serialNumber: "CPU-001" },
-      { name: "Intel Core i5", serialNumber: "CPU-002" },
-      { name: "Intel Core i7", serialNumber: "CPU-003" },
-      { name: "Intel Core i9", serialNumber: "CPU-004" },
-      { name: "AMD Ryzen 5", serialNumber: "CPU-005" },
-      { name: "AMD Ryzen 7", serialNumber: "CPU-006" },
-      { name: "AMD Ryzen 9", serialNumber: "CPU-007" },
-    ],
-    Monitor: [
-      { name: "LED Monitor 19\"", serialNumber: "MON-001" },
-      { name: "LED Monitor 22\"", serialNumber: "MON-002" },
-      { name: "LED Monitor 24\"", serialNumber: "MON-003" },
-      { name: "LED Monitor 27\"", serialNumber: "MON-004" },
-      { name: "Curved Monitor 32\"", serialNumber: "MON-005" },
-    ],
-    Keyboard: [
-      { name: "Wired Keyboard", serialNumber: "KEY-001" },
-      { name: "Wireless Keyboard", serialNumber: "KEY-002" },
-      { name: "Mechanical Keyboard", serialNumber: "KEY-003" },
-      { name: "Ergonomic Keyboard", serialNumber: "KEY-004" },
-    ],
-    Mouse: [
-      { name: "Wired Mouse", serialNumber: "MOU-001" },
-      { name: "Wireless Mouse", serialNumber: "MOU-002" },
-      { name: "Gaming Mouse", serialNumber: "MOU-003" },
-      { name: "Ergonomic Mouse", serialNumber: "MOU-004" },
-    ],
-    Printer: [
-      { name: "Inkjet Printer", serialNumber: "PRT-001" },
-      { name: "Laser Printer", serialNumber: "PRT-002" },
-      { name: "Color Laser Printer", serialNumber: "PRT-003" },
-      { name: "All-in-One Printer", serialNumber: "PRT-004" },
-      { name: "Dot Matrix Printer", serialNumber: "PRT-005" },
-    ],
-    Laptop: [
-      { name: "Dell Laptop", serialNumber: "LAP-001" },
-      { name: "HP Laptop", serialNumber: "LAP-002" },
-      { name: "Lenovo Laptop", serialNumber: "LAP-003" },
-      { name: "Acer Laptop", serialNumber: "LAP-004" },
-      { name: "ASUS Laptop", serialNumber: "LAP-005" },
-    ],
-    Desktop: [
-      { name: "Dell Desktop", serialNumber: "DSK-001" },
-      { name: "HP Desktop", serialNumber: "DSK-002" },
-      { name: "Lenovo Desktop", serialNumber: "DSK-003" },
-      { name: "Assembled Desktop", serialNumber: "DSK-004" },
-    ],
-    Projector: [
-      { name: "LCD Projector", serialNumber: "PRJ-001" },
-      { name: "DLP Projector", serialNumber: "PRJ-002" },
-      { name: "Laser Projector", serialNumber: "PRJ-003" },
-      { name: "Interactive Projector", serialNumber: "PRJ-004" },
-    ],
-    UPS: [
-      { name: "UPS 600VA", serialNumber: "UPS-001" },
-      { name: "UPS 1000VA", serialNumber: "UPS-002" },
-      { name: "UPS 1500VA", serialNumber: "UPS-003" },
-      { name: "UPS 3000VA", serialNumber: "UPS-004" },
-    ],
-    "Lab Equipment": [
-      { name: "Microscope", serialNumber: "LAB-001" },
-      { name: "Centrifuge", serialNumber: "LAB-002" },
-      { name: "Spectrophotometer", serialNumber: "LAB-003" },
-      { name: "pH Meter", serialNumber: "LAB-004" },
-      { name: "Hot Plate", serialNumber: "LAB-005" },
-    ],
-    Furniture: [
-      { name: "Office Chair", serialNumber: "FUR-001" },
-      { name: "Office Desk", serialNumber: "FUR-002" },
-      { name: "File Cabinet", serialNumber: "FUR-003" },
-      { name: "Bookshelf", serialNumber: "FUR-004" },
-    ],
-    Networking: [
-      { name: "Router", serialNumber: "NET-001" },
-      { name: "Switch", serialNumber: "NET-002" },
-      { name: "Access Point", serialNumber: "NET-003" },
-      { name: "Network Cable", serialNumber: "NET-004" },
-    ],
-  };
+  // Database items state
+  const [inventoryItems, setInventoryItems] = useState<{ id: string; name: string; serial_number: string | null; category: string | null }[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
 
-  const itemCategories = Object.keys(categoryItemsMap);
-  const availableItems = itemCategory ? categoryItemsMap[itemCategory] || [] : [];
+  // Get unique categories from inventory items
+  const itemCategories = [...new Set(inventoryItems.map(item => item.category).filter(Boolean))] as string[];
+  
+  // Filter items by selected category
+  const availableItems = itemCategory 
+    ? inventoryItems.filter(item => item.category === itemCategory)
+    : [];
+
+  const fetchInventoryItems = async () => {
+    setLoadingItems(true);
+    try {
+      const { data, error } = await supabase
+        .from("inventory_items")
+        .select("id, name, serial_number, category")
+        .order("name");
+
+      if (error) throw error;
+      setInventoryItems(data || []);
+    } catch (error: any) {
+      console.error("Error fetching inventory items:", error);
+    } finally {
+      setLoadingItems(false);
+    }
+  };
 
   const handleCategoryChange = (category: string) => {
     setItemCategory(category);
@@ -122,11 +65,11 @@ const AddItem = () => {
     setSerialNumber("");
   };
 
-  const handleItemSelect = (selectedName: string) => {
-    const selectedItem = availableItems.find(item => item.name === selectedName);
+  const handleItemSelect = (selectedItemId: string) => {
+    const selectedItem = availableItems.find(item => item.id === selectedItemId);
     if (selectedItem) {
       setName(selectedItem.name);
-      setSerialNumber(selectedItem.serialNumber);
+      setSerialNumber(selectedItem.serial_number || "");
     }
   };
 
@@ -135,6 +78,7 @@ const AddItem = () => {
 
   useEffect(() => {
     checkAuth();
+    fetchInventoryItems();
   }, []);
 
   const checkAuth = async () => {
@@ -408,19 +352,31 @@ const AddItem = () => {
                     <div className="space-y-2">
                       <Label htmlFor="itemName">Item Name *</Label>
                       <Select 
-                        value={name} 
+                        value={availableItems.find(item => item.name === name)?.id || ""} 
                         onValueChange={handleItemSelect}
-                        disabled={!itemCategory}
+                        disabled={!itemCategory || loadingItems}
                       >
                         <SelectTrigger id="itemName" className={!itemCategory ? "opacity-50" : ""}>
-                          <SelectValue placeholder={itemCategory ? "Select item" : "Select category first"} />
+                          <SelectValue placeholder={
+                            loadingItems 
+                              ? "Loading items..." 
+                              : itemCategory 
+                                ? "Select item" 
+                                : "Select category first"
+                          } />
                         </SelectTrigger>
                         <SelectContent className="bg-background border shadow-lg z-50">
-                          {availableItems.map((item) => (
-                            <SelectItem key={item.name} value={item.name}>
-                              {item.name} ({item.serialNumber})
+                          {availableItems.length === 0 ? (
+                            <SelectItem value="no-items" disabled>
+                              No items found in this category
                             </SelectItem>
-                          ))}
+                          ) : (
+                            availableItems.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name} {item.serial_number ? `(${item.serial_number})` : ""}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       {!itemCategory && (
