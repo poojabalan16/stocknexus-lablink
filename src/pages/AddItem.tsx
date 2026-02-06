@@ -8,10 +8,21 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, ArrowLeft, Upload } from "lucide-react";
+import { Package, ArrowLeft, Upload, ChevronsUpDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import * as XLSX from 'xlsx';
+
+interface InventoryItem {
+  id: string;
+  name: string;
+  serial_number: string | null;
+  category: string | null;
+  model: string | null;
+}
 
 const AddItem = () => {
   const navigate = useNavigate();
@@ -21,8 +32,10 @@ const AddItem = () => {
 
   // Form state
   const [itemCategory, setItemCategory] = useState("");
+  const [selectedItemId, setSelectedItemId] = useState("");
   const [name, setName] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
+  const [model, setModel] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [lowStockThreshold, setLowStockThreshold] = useState("5");
   const [location, setLocation] = useState("");
@@ -30,8 +43,11 @@ const AddItem = () => {
   const [department, setDepartment] = useState("");
   const [specifications, setSpecifications] = useState("");
 
+  // Popover state for searchable dropdown
+  const [itemPopoverOpen, setItemPopoverOpen] = useState(false);
+
   // Database items state
-  const [inventoryItems, setInventoryItems] = useState<{ id: string; name: string; serial_number: string | null; category: string | null }[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
 
   // Get unique categories from inventory items
@@ -47,7 +63,7 @@ const AddItem = () => {
     try {
       const { data, error } = await supabase
         .from("inventory_items")
-        .select("id, name, serial_number, category")
+        .select("id, name, serial_number, category, model")
         .order("name");
 
       if (error) throw error;
@@ -61,16 +77,31 @@ const AddItem = () => {
 
   const handleCategoryChange = (category: string) => {
     setItemCategory(category);
+    setSelectedItemId("");
     setName("");
     setSerialNumber("");
+    setModel("");
   };
 
-  const handleItemSelect = (selectedItemId: string) => {
-    const selectedItem = availableItems.find(item => item.id === selectedItemId);
+  const handleItemSelect = (itemId: string) => {
+    const selectedItem = availableItems.find(item => item.id === itemId);
     if (selectedItem) {
+      setSelectedItemId(itemId);
       setName(selectedItem.name);
       setSerialNumber(selectedItem.serial_number || "");
+      setModel(selectedItem.model || "");
     }
+    setItemPopoverOpen(false);
+  };
+
+  // Get display text for selected item
+  const getSelectedItemDisplay = () => {
+    const selectedItem = availableItems.find(item => item.id === selectedItemId);
+    if (!selectedItem) return "";
+    let display = selectedItem.name;
+    if (selectedItem.model) display += ` - ${selectedItem.model}`;
+    if (selectedItem.serial_number) display += ` (${selectedItem.serial_number})`;
+    return display;
   };
 
   // Bulk import state
@@ -350,35 +381,67 @@ const AddItem = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="itemName">Item Name *</Label>
-                      <Select 
-                        value={availableItems.find(item => item.name === name)?.id || ""} 
-                        onValueChange={handleItemSelect}
-                        disabled={!itemCategory || loadingItems}
-                      >
-                        <SelectTrigger id="itemName" className={!itemCategory ? "opacity-50" : ""}>
-                          <SelectValue placeholder={
-                            loadingItems 
+                      <Label htmlFor="itemDetails">Item Details / Model *</Label>
+                      <Popover open={itemPopoverOpen} onOpenChange={setItemPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={itemPopoverOpen}
+                            className={cn(
+                              "w-full justify-between h-10 font-normal",
+                              !itemCategory && "opacity-50 cursor-not-allowed",
+                              !selectedItemId && "text-muted-foreground"
+                            )}
+                            disabled={!itemCategory || loadingItems}
+                          >
+                            {loadingItems 
                               ? "Loading items..." 
-                              : itemCategory 
-                                ? "Select item" 
-                                : "Select category first"
-                          } />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border shadow-lg z-50">
-                          {availableItems.length === 0 ? (
-                            <SelectItem value="no-items" disabled>
-                              No items found in this category
-                            </SelectItem>
-                          ) : (
-                            availableItems.map((item) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.name} {item.serial_number ? `(${item.serial_number})` : ""}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                              : selectedItemId 
+                                ? getSelectedItemDisplay()
+                                : itemCategory 
+                                  ? "Search and select item..." 
+                                  : "Select category first"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search items by name, model, or serial..." />
+                            <CommandList>
+                              <CommandEmpty>No items found in this category.</CommandEmpty>
+                              <CommandGroup heading={`${itemCategory} Items (${availableItems.length})`}>
+                                {availableItems.map((item) => (
+                                  <CommandItem
+                                    key={item.id}
+                                    value={`${item.name} ${item.model || ""} ${item.serial_number || ""}`}
+                                    onSelect={() => handleItemSelect(item.id)}
+                                    className="cursor-pointer"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedItemId === item.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">
+                                        {item.name}
+                                        {item.model && <span className="text-muted-foreground ml-1">- {item.model}</span>}
+                                      </span>
+                                      {item.serial_number && (
+                                        <span className="text-xs text-muted-foreground">
+                                          S/N: {item.serial_number}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       {!itemCategory && (
                         <p className="text-xs text-muted-foreground">
                           Please select an item category first
@@ -393,10 +456,10 @@ const AddItem = () => {
                         value={serialNumber}
                         onChange={(e) => setSerialNumber(e.target.value)}
                         placeholder="Auto-filled from selection"
-                        readOnly={!!itemCategory}
-                        className={itemCategory ? "bg-muted" : ""}
+                        readOnly={!!selectedItemId}
+                        className={selectedItemId ? "bg-muted" : ""}
                       />
-                      {itemCategory && (
+                      {selectedItemId && (
                         <p className="text-xs text-muted-foreground">
                           Serial number is auto-filled based on item selection
                         </p>
