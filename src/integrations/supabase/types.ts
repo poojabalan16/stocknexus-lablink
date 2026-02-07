@@ -447,6 +447,9 @@ export type Database = {
         | "Bio-tech"
         | "Chemical"
         | "Mechanical"
+        | "Accounts"
+        | "Exam Cell"
+        | "Library"
       nature_of_service:
         | "maintenance"
         | "repair"
@@ -591,6 +594,9 @@ export const Constants = {
         "Bio-tech",
         "Chemical",
         "Mechanical",
+        "Accounts",
+        "Exam Cell",
+        "Library",
       ],
       nature_of_service: [
         "maintenance",
