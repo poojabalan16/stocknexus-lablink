@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Cpu, Network, Database, Microscope, FlaskConical, Dna, Beaker, Cog } from "lucide-react";
+import { Cpu, Network, Database, Microscope, FlaskConical, Dna, Beaker, Cog, Calculator, ClipboardList, BookOpen } from "lucide-react";
 
 const departmentIcons: Record<string, any> = {
   IT: Cpu,
@@ -14,6 +14,9 @@ const departmentIcons: Record<string, any> = {
   "Bio-tech": Dna,
   Chemical: Beaker,
   Mechanical: Cog,
+  Accounts: Calculator,
+  "Exam Cell": ClipboardList,
+  Library: BookOpen,
 };
 
 interface DepartmentData {

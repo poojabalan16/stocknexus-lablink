@@ -28,6 +28,9 @@ import {
   Wrench,
   MessageSquare,
   Trash2,
+  Calculator,
+  ClipboardList,
+  BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,6 +51,9 @@ const departmentItems = [
   { title: "Bio-tech Department", url: "/departments/Bio-tech", icon: Dna, dept: "Bio-tech" },
   { title: "Chemical Department", url: "/departments/Chemical", icon: FlaskConical, dept: "Chemical" },
   { title: "Mechanical Department", url: "/departments/Mechanical", icon: Wrench, dept: "Mechanical" },
+  { title: "Accounts", url: "/departments/Accounts", icon: Calculator, dept: "Accounts" },
+  { title: "Exam Cell", url: "/departments/Exam Cell", icon: ClipboardList, dept: "Exam Cell" },
+  { title: "Library", url: "/departments/Library", icon: BookOpen, dept: "Library" },
 ];
 
 export function AppSidebar() {
