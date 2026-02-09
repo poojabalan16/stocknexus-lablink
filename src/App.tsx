@@ -20,6 +20,9 @@ import ServiceDetail from "./pages/ServiceDetail";
 import Grievances from "./pages/Grievances";
 import AdminGrievances from "./pages/AdminGrievances";
 import ScrapManagement from "./pages/ScrapManagement";
+import Purchases from "./pages/Purchases";
+import AddPurchase from "./pages/AddPurchase";
+import PurchaseDetail from "./pages/PurchaseDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +51,9 @@ const App = () => (
           <Route path="/grievances" element={<Grievances />} />
           <Route path="/admin/grievances" element={<AdminGrievances />} />
           <Route path="/scrap" element={<ScrapManagement />} />
+          <Route path="/purchases" element={<Purchases />} />
+          <Route path="/purchases/add" element={<AddPurchase />} />
+          <Route path="/purchases/:id" element={<PurchaseDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
