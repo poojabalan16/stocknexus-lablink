@@ -235,6 +235,152 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          purchase_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          purchase_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          purchase_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_attachments_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchases: {
+        Row: {
+          base_amount: number
+          bill_invoice_number: string
+          billing_period: Database["public"]["Enums"]["billing_period"]
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          department: Database["public"]["Enums"]["department"]
+          due_date: string | null
+          gst_amount: number | null
+          gst_applicable: boolean
+          gst_percentage: number | null
+          id: string
+          invoice_date: string
+          is_deleted: boolean
+          item_category: Database["public"]["Enums"]["item_category"]
+          item_description: string | null
+          item_name: string
+          payment_mode: Database["public"]["Enums"]["payment_mode"]
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          purchase_date: string
+          purchase_type: Database["public"]["Enums"]["purchase_type"]
+          quantity: number | null
+          reference_order_number: string | null
+          remarks: string | null
+          total_amount: number
+          unit_price: number | null
+          updated_at: string
+          vendor_category: Database["public"]["Enums"]["vendor_category"]
+          vendor_contact: string | null
+          vendor_gst_number: string | null
+          vendor_name: string
+        }
+        Insert: {
+          base_amount?: number
+          bill_invoice_number: string
+          billing_period?: Database["public"]["Enums"]["billing_period"]
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          department: Database["public"]["Enums"]["department"]
+          due_date?: string | null
+          gst_amount?: number | null
+          gst_applicable?: boolean
+          gst_percentage?: number | null
+          id?: string
+          invoice_date: string
+          is_deleted?: boolean
+          item_category: Database["public"]["Enums"]["item_category"]
+          item_description?: string | null
+          item_name: string
+          payment_mode: Database["public"]["Enums"]["payment_mode"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          purchase_date?: string
+          purchase_type: Database["public"]["Enums"]["purchase_type"]
+          quantity?: number | null
+          reference_order_number?: string | null
+          remarks?: string | null
+          total_amount?: number
+          unit_price?: number | null
+          updated_at?: string
+          vendor_category: Database["public"]["Enums"]["vendor_category"]
+          vendor_contact?: string | null
+          vendor_gst_number?: string | null
+          vendor_name: string
+        }
+        Update: {
+          base_amount?: number
+          bill_invoice_number?: string
+          billing_period?: Database["public"]["Enums"]["billing_period"]
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          department?: Database["public"]["Enums"]["department"]
+          due_date?: string | null
+          gst_amount?: number | null
+          gst_applicable?: boolean
+          gst_percentage?: number | null
+          id?: string
+          invoice_date?: string
+          is_deleted?: boolean
+          item_category?: Database["public"]["Enums"]["item_category"]
+          item_description?: string | null
+          item_name?: string
+          payment_mode?: Database["public"]["Enums"]["payment_mode"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          purchase_date?: string
+          purchase_type?: Database["public"]["Enums"]["purchase_type"]
+          quantity?: number | null
+          reference_order_number?: string | null
+          remarks?: string | null
+          total_amount?: number
+          unit_price?: number | null
+          updated_at?: string
+          vendor_category?: Database["public"]["Enums"]["vendor_category"]
+          vendor_contact?: string | null
+          vendor_gst_number?: string | null
+          vendor_name?: string
+        }
+        Relationships: []
+      }
       registration_requests: {
         Row: {
           created_at: string
@@ -438,6 +584,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "hod" | "staff"
+      billing_period: "one_time" | "monthly" | "quarterly" | "annual"
       department:
         | "IT"
         | "AI&DS"
@@ -450,13 +597,34 @@ export type Database = {
         | "Accounts"
         | "Exam Cell"
         | "Library"
+      item_category:
+        | "hardware"
+        | "network"
+        | "software"
+        | "office"
+        | "lab"
+        | "other"
       nature_of_service:
         | "maintenance"
         | "repair"
         | "calibration"
         | "installation"
+      payment_mode: "cash" | "cheque" | "neft" | "rtgs" | "upi"
+      payment_status: "paid" | "pending" | "partially_paid"
+      purchase_type:
+        | "asset"
+        | "consumable"
+        | "service"
+        | "subscription"
+        | "utility"
       service_status: "pending" | "in_progress" | "completed"
       service_type: "internal" | "external"
+      vendor_category:
+        | "asset_vendor"
+        | "service_provider"
+        | "utility"
+        | "software_vendor"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -585,6 +753,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "hod", "staff"],
+      billing_period: ["one_time", "monthly", "quarterly", "annual"],
       department: [
         "IT",
         "AI&DS",
@@ -598,14 +767,38 @@ export const Constants = {
         "Exam Cell",
         "Library",
       ],
+      item_category: [
+        "hardware",
+        "network",
+        "software",
+        "office",
+        "lab",
+        "other",
+      ],
       nature_of_service: [
         "maintenance",
         "repair",
         "calibration",
         "installation",
       ],
+      payment_mode: ["cash", "cheque", "neft", "rtgs", "upi"],
+      payment_status: ["paid", "pending", "partially_paid"],
+      purchase_type: [
+        "asset",
+        "consumable",
+        "service",
+        "subscription",
+        "utility",
+      ],
       service_status: ["pending", "in_progress", "completed"],
       service_type: ["internal", "external"],
+      vendor_category: [
+        "asset_vendor",
+        "service_provider",
+        "utility",
+        "software_vendor",
+        "other",
+      ],
     },
   },
 } as const

@@ -31,6 +31,7 @@ import {
   Calculator,
   ClipboardList,
   BookOpen,
+  ShoppingCart,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -159,6 +160,14 @@ export function AppSidebar() {
                     <NavLink to="/scrap" className={getNavCls}>
                       <Trash2 className="h-4 w-4" />
                       {!collapsed && <span>Scrap Management</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/purchases" className={getNavCls}>
+                      <ShoppingCart className="h-4 w-4" />
+                      {!collapsed && <span>Purchase & Bills</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
