@@ -597,6 +597,11 @@ export type Database = {
         | "Accounts"
         | "Exam Cell"
         | "Library"
+        | "ECE"
+        | "EEE"
+        | "CIVIL"
+        | "CSBS"
+        | "MBA"
       item_category:
         | "hardware"
         | "network"
@@ -766,6 +771,11 @@ export const Constants = {
         "Accounts",
         "Exam Cell",
         "Library",
+        "ECE",
+        "EEE",
+        "CIVIL",
+        "CSBS",
+        "MBA",
       ],
       item_category: [
         "hardware",
