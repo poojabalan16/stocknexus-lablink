@@ -152,6 +152,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_working: boolean
+          lecture_book_number: string | null
           location: string | null
           low_stock_threshold: number | null
           model: string | null
@@ -172,6 +173,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_working?: boolean
+          lecture_book_number?: string | null
           location?: string | null
           low_stock_threshold?: number | null
           model?: string | null
@@ -192,6 +194,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_working?: boolean
+          lecture_book_number?: string | null
           location?: string | null
           low_stock_threshold?: number | null
           model?: string | null
@@ -204,6 +207,119 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      item_movements: {
+        Row: {
+          created_at: string
+          from_department: Database["public"]["Enums"]["department"]
+          id: string
+          is_deleted: boolean
+          item_name: string
+          lecture_book_number: string | null
+          moved_by: string | null
+          movement_date: string
+          quantity: number
+          reason: string | null
+          to_department: Database["public"]["Enums"]["department"]
+        }
+        Insert: {
+          created_at?: string
+          from_department: Database["public"]["Enums"]["department"]
+          id?: string
+          is_deleted?: boolean
+          item_name: string
+          lecture_book_number?: string | null
+          moved_by?: string | null
+          movement_date?: string
+          quantity?: number
+          reason?: string | null
+          to_department: Database["public"]["Enums"]["department"]
+        }
+        Update: {
+          created_at?: string
+          from_department?: Database["public"]["Enums"]["department"]
+          id?: string
+          is_deleted?: boolean
+          item_name?: string
+          lecture_book_number?: string | null
+          moved_by?: string | null
+          movement_date?: string
+          quantity?: number
+          reason?: string | null
+          to_department?: Database["public"]["Enums"]["department"]
+        }
+        Relationships: []
+      }
+      item_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          attachment_url: string | null
+          created_at: string
+          id: string
+          is_deleted: boolean
+          item_name: string
+          lecture_book_number: string | null
+          movement_id: string | null
+          priority: string
+          quantity_requested: number
+          rejection_reason: string | null
+          remarks: string | null
+          requested_by: string
+          requested_from_department: Database["public"]["Enums"]["department"]
+          requesting_department: Database["public"]["Enums"]["department"]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          item_name: string
+          lecture_book_number?: string | null
+          movement_id?: string | null
+          priority?: string
+          quantity_requested?: number
+          rejection_reason?: string | null
+          remarks?: string | null
+          requested_by: string
+          requested_from_department: Database["public"]["Enums"]["department"]
+          requesting_department: Database["public"]["Enums"]["department"]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          item_name?: string
+          lecture_book_number?: string | null
+          movement_id?: string | null
+          priority?: string
+          quantity_requested?: number
+          rejection_reason?: string | null
+          remarks?: string | null
+          requested_by?: string
+          requested_from_department?: Database["public"]["Enums"]["department"]
+          requesting_department?: Database["public"]["Enums"]["department"]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_requests_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "item_movements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -422,46 +538,64 @@ export type Database = {
       }
       scrap_items: {
         Row: {
+          bill_url: string | null
           created_at: string
           department: Database["public"]["Enums"]["department"]
+          disposal_certificate_url: string | null
           id: string
           item_id: string | null
           item_model: string | null
           item_name: string
           item_serial_number: string | null
+          lecture_book_number: string | null
           notes: string | null
           quantity: number
           reason: string
+          scrap_value: number | null
           scrapped_at: string
           scrapped_by: string
+          vendor_contact: string | null
+          vendor_name: string | null
         }
         Insert: {
+          bill_url?: string | null
           created_at?: string
           department: Database["public"]["Enums"]["department"]
+          disposal_certificate_url?: string | null
           id?: string
           item_id?: string | null
           item_model?: string | null
           item_name: string
           item_serial_number?: string | null
+          lecture_book_number?: string | null
           notes?: string | null
           quantity?: number
           reason: string
+          scrap_value?: number | null
           scrapped_at?: string
           scrapped_by: string
+          vendor_contact?: string | null
+          vendor_name?: string | null
         }
         Update: {
+          bill_url?: string | null
           created_at?: string
           department?: Database["public"]["Enums"]["department"]
+          disposal_certificate_url?: string | null
           id?: string
           item_id?: string | null
           item_model?: string | null
           item_name?: string
           item_serial_number?: string | null
+          lecture_book_number?: string | null
           notes?: string | null
           quantity?: number
           reason?: string
+          scrap_value?: number | null
           scrapped_at?: string
           scrapped_by?: string
+          vendor_contact?: string | null
+          vendor_name?: string | null
         }
         Relationships: [
           {
@@ -475,6 +609,7 @@ export type Database = {
       }
       services: {
         Row: {
+          amount_paid: number | null
           bill_photo_url: string | null
           cost: number | null
           created_at: string
@@ -483,14 +618,20 @@ export type Database = {
           equipment_id: string
           id: string
           nature_of_service: Database["public"]["Enums"]["nature_of_service"]
+          payment_date: string | null
+          payment_mode: string | null
+          payment_proof_url: string | null
+          payment_status: string | null
           remarks: string | null
           service_date: string
           service_type: Database["public"]["Enums"]["service_type"]
           status: Database["public"]["Enums"]["service_status"]
           technician_vendor_name: string
+          transaction_id: string | null
           updated_at: string
         }
         Insert: {
+          amount_paid?: number | null
           bill_photo_url?: string | null
           cost?: number | null
           created_at?: string
@@ -499,14 +640,20 @@ export type Database = {
           equipment_id: string
           id?: string
           nature_of_service: Database["public"]["Enums"]["nature_of_service"]
+          payment_date?: string | null
+          payment_mode?: string | null
+          payment_proof_url?: string | null
+          payment_status?: string | null
           remarks?: string | null
           service_date: string
           service_type: Database["public"]["Enums"]["service_type"]
           status?: Database["public"]["Enums"]["service_status"]
           technician_vendor_name: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Update: {
+          amount_paid?: number | null
           bill_photo_url?: string | null
           cost?: number | null
           created_at?: string
@@ -515,11 +662,16 @@ export type Database = {
           equipment_id?: string
           id?: string
           nature_of_service?: Database["public"]["Enums"]["nature_of_service"]
+          payment_date?: string | null
+          payment_mode?: string | null
+          payment_proof_url?: string | null
+          payment_status?: string | null
           remarks?: string | null
           service_date?: string
           service_type?: Database["public"]["Enums"]["service_type"]
           status?: Database["public"]["Enums"]["service_status"]
           technician_vendor_name?: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Relationships: [

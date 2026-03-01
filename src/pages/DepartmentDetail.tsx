@@ -351,6 +351,7 @@ const DepartmentDetail = () => {
                           <TableHeader>
                             <TableRow>
                               <TableHead>Serial Number</TableHead>
+                              <TableHead>LBN</TableHead>
                               <TableHead>Model</TableHead>
                               <TableHead>Qty</TableHead>
                               {isWorkingStatusDept && (
@@ -368,6 +369,9 @@ const DepartmentDetail = () => {
                               <TableRow key={item.id}>
                                 <TableCell className="font-mono text-sm">
                                   {item.serial_number || "-"}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">{(item as any).lecture_book_number || "-"}</Badge>
                                 </TableCell>
                                 <TableCell>{item.model || "-"}</TableCell>
                                 <TableCell>{item.quantity}</TableCell>
