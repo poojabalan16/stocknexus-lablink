@@ -32,6 +32,12 @@ import {
   ClipboardList,
   BookOpen,
   ShoppingCart,
+  ArrowRightLeft,
+  Search,
+  Zap,
+  Building2,
+  GraduationCap,
+  Briefcase,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -47,6 +53,11 @@ const departmentItems = [
   { title: "IT Department", url: "/departments/IT", icon: Cpu, dept: "IT" },
   { title: "AI&DS Department", url: "/departments/AI&DS", icon: Network, dept: "AI&DS" },
   { title: "CSE Department", url: "/departments/CSE", icon: Database, dept: "CSE" },
+  { title: "ECE Department", url: "/departments/ECE", icon: Zap, dept: "ECE" },
+  { title: "EEE Department", url: "/departments/EEE", icon: Zap, dept: "EEE" },
+  { title: "CIVIL Department", url: "/departments/CIVIL", icon: Building2, dept: "CIVIL" },
+  { title: "CSBS Department", url: "/departments/CSBS", icon: GraduationCap, dept: "CSBS" },
+  { title: "MBA Department", url: "/departments/MBA", icon: Briefcase, dept: "MBA" },
   { title: "Physics Department", url: "/departments/Physics", icon: Microscope, dept: "Physics" },
   { title: "Chemistry Department", url: "/departments/Chemistry", icon: FlaskConical, dept: "Chemistry" },
   { title: "Bio-tech Department", url: "/departments/Bio-tech", icon: Dna, dept: "Bio-tech" },
@@ -168,6 +179,30 @@ export function AppSidebar() {
                     <NavLink to="/purchases" className={getNavCls}>
                       <ShoppingCart className="h-4 w-4" />
                       {!collapsed && <span>Purchase & Bills</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/movements" className={getNavCls}>
+                      <ArrowRightLeft className="h-4 w-4" />
+                      {!collapsed && <span>Item Movements</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/requests" className={getNavCls}>
+                      <ClipboardList className="h-4 w-4" />
+                      {!collapsed && <span>Item Requests</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/lecture-book" className={getNavCls}>
+                      <Search className="h-4 w-4" />
+                      {!collapsed && <span>Lecture Book Lookup</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

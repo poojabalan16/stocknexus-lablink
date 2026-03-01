@@ -23,6 +23,9 @@ import ScrapManagement from "./pages/ScrapManagement";
 import Purchases from "./pages/Purchases";
 import AddPurchase from "./pages/AddPurchase";
 import PurchaseDetail from "./pages/PurchaseDetail";
+import ItemMovements from "./pages/ItemMovements";
+import ItemRequests from "./pages/ItemRequests";
+import LectureBookLookup from "./pages/LectureBookLookup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +57,9 @@ const App = () => (
           <Route path="/purchases" element={<Purchases />} />
           <Route path="/purchases/add" element={<AddPurchase />} />
           <Route path="/purchases/:id" element={<PurchaseDetail />} />
+          <Route path="/movements" element={<ItemMovements />} />
+          <Route path="/requests" element={<ItemRequests />} />
+          <Route path="/lecture-book" element={<LectureBookLookup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

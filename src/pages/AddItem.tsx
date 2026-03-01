@@ -23,6 +23,7 @@ const AddItem = () => {
   const [itemCategory, setItemCategory] = useState("");
   const [name, setName] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
+  const [lectureBookNumber, setLectureBookNumber] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [lowStockThreshold, setLowStockThreshold] = useState("5");
   const [location, setLocation] = useState("");
@@ -91,6 +92,7 @@ const AddItem = () => {
           name,
           category: itemCategory || null,
           serial_number: serialNumber || null,
+          lecture_book_number: lectureBookNumber || null,
           quantity: parseInt(quantity),
           low_stock_threshold: parseInt(lowStockThreshold),
           location: location || null,
@@ -320,6 +322,16 @@ const AddItem = () => {
                     </div>
 
                     <div className="space-y-2">
+                      <Label htmlFor="lbn">Lecture Book Number</Label>
+                      <Input
+                        id="lbn"
+                        value={lectureBookNumber}
+                        onChange={(e) => setLectureBookNumber(e.target.value)}
+                        placeholder="e.g., POO8"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="quantity">Quantity *</Label>
                       <Input
                         id="quantity"
@@ -380,9 +392,19 @@ const AddItem = () => {
                           <SelectItem value="IT">IT</SelectItem>
                           <SelectItem value="AI&DS">AI&DS</SelectItem>
                           <SelectItem value="CSE">CSE</SelectItem>
+                          <SelectItem value="ECE">ECE</SelectItem>
+                          <SelectItem value="EEE">EEE</SelectItem>
+                          <SelectItem value="CIVIL">CIVIL</SelectItem>
+                          <SelectItem value="CSBS">CSBS</SelectItem>
+                          <SelectItem value="MBA">MBA</SelectItem>
                           <SelectItem value="Physics">Physics</SelectItem>
                           <SelectItem value="Chemistry">Chemistry</SelectItem>
                           <SelectItem value="Bio-tech">Bio-tech</SelectItem>
+                          <SelectItem value="Chemical">Chemical</SelectItem>
+                          <SelectItem value="Mechanical">Mechanical</SelectItem>
+                          <SelectItem value="Accounts">Accounts</SelectItem>
+                          <SelectItem value="Exam Cell">Exam Cell</SelectItem>
+                          <SelectItem value="Library">Library</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
