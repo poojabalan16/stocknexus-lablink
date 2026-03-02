@@ -79,6 +79,11 @@ const formSchema = z.object({
   cost: z.string().optional(),
   remarks: z.string().optional(),
   bill_photo: z.instanceof(File).optional(),
+  payment_mode: z.string().optional(),
+  transaction_id: z.string().optional(),
+  amount_paid: z.string().optional(),
+  payment_status: z.string().optional(),
+  payment_date: z.string().optional(),
 });
 
 const AddService = () => {
@@ -102,6 +107,11 @@ const AddService = () => {
       technician_vendor_name: "",
       cost: "",
       remarks: "",
+      payment_mode: "",
+      transaction_id: "",
+      amount_paid: "",
+      payment_status: "pending",
+      payment_date: "",
     },
   });
 
@@ -222,6 +232,11 @@ const AddService = () => {
         remarks: values.remarks,
         bill_photo_url: billPhotoUrl,
         created_by: userData.user.id,
+        payment_mode: values.payment_mode || null,
+        transaction_id: values.transaction_id || null,
+        amount_paid: values.amount_paid ? parseFloat(values.amount_paid) : null,
+        payment_status: values.payment_status || "pending",
+        payment_date: values.payment_date || null,
       };
 
       const { error } = await supabase.from("services").insert([serviceData]);
@@ -717,6 +732,130 @@ const AddService = () => {
                       </FormControl>
                       <FormDescription>
                         Optional - Add any relevant details about the service
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Payment Details */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/10 rounded-lg">
+                    <IndianRupee className="h-5 w-5 text-emerald-500" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Payment Details</CardTitle>
+                    <CardDescription>Track payment information for this service</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="payment_status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="paid">Paid</SelectItem>
+                            <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="payment_mode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Mode</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select mode" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="cash">Cash</SelectItem>
+                            <SelectItem value="cheque">Cheque</SelectItem>
+                            <SelectItem value="neft">NEFT</SelectItem>
+                            <SelectItem value="rtgs">RTGS</SelectItem>
+                            <SelectItem value="upi">UPI</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="amount_paid"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Amount Paid</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="payment_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Date</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input type="date" className="pl-10" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="transaction_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transaction / Reference ID</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter transaction or cheque number" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Optional - Enter the payment reference number
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

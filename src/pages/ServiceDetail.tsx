@@ -50,6 +50,11 @@ const formSchema = z.object({
   cost: z.string().optional(),
   remarks: z.string().optional(),
   bill_photo: z.instanceof(File).optional(),
+  payment_mode: z.string().optional(),
+  transaction_id: z.string().optional(),
+  amount_paid: z.string().optional(),
+  payment_status: z.string().optional(),
+  payment_date: z.string().optional(),
 });
 
 const ServiceDetail = () => {
@@ -96,6 +101,11 @@ const ServiceDetail = () => {
         technician_vendor_name: service.technician_vendor_name,
         cost: service.cost?.toString() || "",
         remarks: service.remarks || "",
+        payment_mode: service.payment_mode || "",
+        transaction_id: service.transaction_id || "",
+        amount_paid: service.amount_paid?.toString() || "",
+        payment_status: service.payment_status || "pending",
+        payment_date: service.payment_date || "",
       });
       if (service.bill_photo_url) {
         setBillPhotoPreview(service.bill_photo_url);
@@ -167,6 +177,11 @@ const ServiceDetail = () => {
           cost: values.cost ? parseFloat(values.cost) : null,
           remarks: values.remarks,
           bill_photo_url: billPhotoUrl,
+          payment_mode: values.payment_mode || null,
+          transaction_id: values.transaction_id || null,
+          amount_paid: values.amount_paid ? parseFloat(values.amount_paid) : null,
+          payment_status: values.payment_status || "pending",
+          payment_date: values.payment_date || null,
         })
         .eq("id", id);
 
@@ -424,6 +439,98 @@ const ServiceDetail = () => {
                     )}
                   />
 
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="payment_status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Status</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="paid">Paid</SelectItem>
+                              <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="payment_mode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Mode</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select mode" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="cash">Cash</SelectItem>
+                              <SelectItem value="cheque">Cheque</SelectItem>
+                              <SelectItem value="neft">NEFT</SelectItem>
+                              <SelectItem value="rtgs">RTGS</SelectItem>
+                              <SelectItem value="upi">UPI</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="amount_paid"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Amount Paid</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="payment_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="transaction_id"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Transaction / Reference ID</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter transaction or cheque number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="bill-photo">Bill Photo / Receipt (Optional)</Label>
                     <div className="space-y-4">
@@ -518,6 +625,42 @@ const ServiceDetail = () => {
                     {service.cost ? `₹${service.cost.toFixed(2)}` : "N/A"}
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment Status</p>
+                  <Badge variant={service.payment_status === "paid" ? "default" : service.payment_status === "partially_paid" ? "secondary" : "outline"}>
+                    {service.payment_status === "partially_paid" ? "Partially Paid" : (service.payment_status || "Pending").charAt(0).toUpperCase() + (service.payment_status || "pending").slice(1)}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment Mode</p>
+                  <p className="font-medium uppercase">{service.payment_mode || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Amount Paid</p>
+                  <p className="font-medium">
+                    {service.amount_paid ? `₹${Number(service.amount_paid).toFixed(2)}` : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment Date</p>
+                  <p className="font-medium">
+                    {service.payment_date ? new Date(service.payment_date).toLocaleDateString() : "N/A"}
+                  </p>
+                </div>
+                {service.transaction_id && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Transaction ID</p>
+                    <p className="font-medium font-mono">{service.transaction_id}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
