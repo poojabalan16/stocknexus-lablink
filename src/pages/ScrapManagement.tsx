@@ -12,9 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Search, Plus, Package, Calendar, User } from "lucide-react";
+import { Trash2, Search, Plus, Package, Calendar, User, IndianRupee, Upload } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { format } from "date-fns";
+import { Constants } from "@/integrations/supabase/types";
 
 interface ScrapItem {
   id: string;
@@ -28,6 +29,12 @@ interface ScrapItem {
   scrapped_by: string;
   scrapped_at: string;
   notes: string | null;
+  scrap_value: number | null;
+  vendor_name: string | null;
+  vendor_contact: string | null;
+  lecture_book_number: string | null;
+  bill_url: string | null;
+  disposal_certificate_url: string | null;
 }
 
 interface InventoryItem {
@@ -37,12 +44,15 @@ interface InventoryItem {
   serial_number: string | null;
   department: string;
   quantity: number;
+  lecture_book_number: string | null;
 }
 
 interface Profile {
   id: string;
   full_name: string;
 }
+
+const departments = Constants.public.Enums.department;
 
 const ScrapManagement = () => {
   const navigate = useNavigate();
@@ -61,9 +71,12 @@ const ScrapManagement = () => {
   const [scrapQuantity, setScrapQuantity] = useState<string>("1");
   const [scrapReason, setScrapReason] = useState("");
   const [scrapNotes, setScrapNotes] = useState("");
+  const [scrapValue, setScrapValue] = useState<string>("");
+  const [vendorName, setVendorName] = useState("");
+  const [vendorContact, setVendorContact] = useState("");
+  const [billFile, setBillFile] = useState<File | null>(null);
+  const [disposalCertFile, setDisposalCertFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const departments = ["IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech", "Chemical", "Mechanical"];
 
   useEffect(() => {
     checkAuth();
@@ -123,7 +136,7 @@ const ScrapManagement = () => {
     try {
       let query = supabase
         .from("inventory_items")
-        .select("id, name, model, serial_number, department, quantity")
+        .select("id, name, model, serial_number, department, quantity, lecture_book_number")
         .gt("quantity", 0);
 
       if (userRole === "hod" && userDepartment) {
@@ -157,6 +170,23 @@ const ScrapManagement = () => {
     }
   };
 
+  const uploadFile = async (file: File, folder: string): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    
+    const { error } = await supabase.storage
+      .from('service-bills')
+      .upload(`${folder}/${fileName}`, file);
+
+    if (error) throw error;
+
+    const { data: urlData } = supabase.storage
+      .from('service-bills')
+      .getPublicUrl(`${folder}/${fileName}`);
+    
+    return urlData.publicUrl;
+  };
+
   const handleScrapItem = async () => {
     if (!selectedItem || !scrapReason || !userId) {
       toast.error("Please select an item and provide a reason");
@@ -178,7 +208,16 @@ const ScrapManagement = () => {
     setSubmitting(true);
 
     try {
-      // Insert scrap record
+      let billUrl: string | null = null;
+      let disposalCertUrl: string | null = null;
+
+      if (billFile) {
+        billUrl = await uploadFile(billFile, 'scrap-bills');
+      }
+      if (disposalCertFile) {
+        disposalCertUrl = await uploadFile(disposalCertFile, 'scrap-disposal');
+      }
+
       const { error: scrapError } = await supabase
         .from("scrap_items")
         .insert({
@@ -191,11 +230,16 @@ const ScrapManagement = () => {
           reason: scrapReason,
           scrapped_by: userId,
           notes: scrapNotes || null,
+          scrap_value: scrapValue ? parseFloat(scrapValue) : null,
+          vendor_name: vendorName || null,
+          vendor_contact: vendorContact || null,
+          lecture_book_number: item.lecture_book_number || null,
+          bill_url: billUrl,
+          disposal_certificate_url: disposalCertUrl,
         });
 
       if (scrapError) throw scrapError;
 
-      // Update or delete inventory item
       const newQuantity = item.quantity - qty;
       if (newQuantity === 0) {
         const { error: deleteError } = await supabase
@@ -229,6 +273,11 @@ const ScrapManagement = () => {
     setScrapQuantity("1");
     setScrapReason("");
     setScrapNotes("");
+    setScrapValue("");
+    setVendorName("");
+    setVendorContact("");
+    setBillFile(null);
+    setDisposalCertFile(null);
   };
 
   const filteredInventoryItems = inventoryItems.filter(item => 
@@ -239,12 +288,16 @@ const ScrapManagement = () => {
     const matchesSearch = 
       item.item_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.item_serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.reason.toLowerCase().includes(searchQuery.toLowerCase());
+      item.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.vendor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.lecture_book_number?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesDepartment = departmentFilter === "all" || item.department === departmentFilter;
     
     return matchesSearch && matchesDepartment;
   });
+
+  const totalScrapValue = scrapItems.reduce((sum, item) => sum + (item.scrap_value || 0), 0);
 
   const getSelectedItem = () => inventoryItems.find(i => i.id === selectedItem);
 
@@ -283,7 +336,7 @@ const ScrapManagement = () => {
                 Move to Scrap
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Move Item to Scrap</DialogTitle>
                 <DialogDescription>
@@ -363,6 +416,67 @@ const ScrapManagement = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="scrap-value">Scrap / Salvage Value (₹)</Label>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="scrap-value"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      className="pl-10"
+                      value={scrapValue}
+                      onChange={(e) => setScrapValue(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="vendor-name">Vendor / Buyer Name</Label>
+                    <Input
+                      id="vendor-name"
+                      placeholder="Enter vendor name"
+                      value={vendorName}
+                      onChange={(e) => setVendorName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="vendor-contact">Vendor Contact</Label>
+                    <Input
+                      id="vendor-contact"
+                      placeholder="Phone or email"
+                      value={vendorContact}
+                      onChange={(e) => setVendorContact(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="bill-file">Bill / Invoice</Label>
+                    <Input
+                      id="bill-file"
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) => setBillFile(e.target.files?.[0] || null)}
+                    />
+                    <p className="text-xs text-muted-foreground">PDF, PNG, JPG (Max 5MB)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="disposal-cert">Disposal Certificate</Label>
+                    <Input
+                      id="disposal-cert"
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) => setDisposalCertFile(e.target.files?.[0] || null)}
+                    />
+                    <p className="text-xs text-muted-foreground">PDF, PNG, JPG (Max 5MB)</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="notes">Additional Notes</Label>
                   <Textarea
                     id="notes"
@@ -391,7 +505,7 @@ const ScrapManagement = () => {
         </div>
 
         {/* Statistics */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Scrapped Items</CardTitle>
@@ -410,6 +524,15 @@ const ScrapManagement = () => {
               <div className="text-2xl font-bold">
                 {scrapItems.reduce((sum, item) => sum + item.quantity, 0)}
               </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Scrap Value</CardTitle>
+              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{totalScrapValue.toFixed(2)}</div>
             </CardContent>
           </Card>
           <Card>
@@ -439,7 +562,7 @@ const ScrapManagement = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name, serial number, or reason..."
+                  placeholder="Search by name, serial number, vendor, or LBN..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -467,15 +590,18 @@ const ScrapManagement = () => {
                   : "No items have been scrapped yet"}
               </p>
             ) : (
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Item Name</TableHead>
+                      <TableHead>LBN</TableHead>
                       <TableHead>Model/Serial</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Qty</TableHead>
                       <TableHead>Reason</TableHead>
+                      <TableHead>Scrap Value</TableHead>
+                      <TableHead>Vendor</TableHead>
                       <TableHead>Scrapped By</TableHead>
                       <TableHead>Date</TableHead>
                     </TableRow>
@@ -484,6 +610,13 @@ const ScrapManagement = () => {
                     {filteredScrapItems.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.item_name}</TableCell>
+                        <TableCell>
+                          {item.lecture_book_number ? (
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {item.lecture_book_number}
+                            </Badge>
+                          ) : "-"}
+                        </TableCell>
                         <TableCell>
                           <div className="text-sm">
                             {item.item_model && <div>{item.item_model}</div>}
@@ -506,6 +639,19 @@ const ScrapManagement = () => {
                               {item.notes}
                             </p>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          {item.scrap_value ? `₹${item.scrap_value.toFixed(2)}` : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {item.vendor_name ? (
+                            <div className="text-sm">
+                              <div>{item.vendor_name}</div>
+                              {item.vendor_contact && (
+                                <div className="text-xs text-muted-foreground">{item.vendor_contact}</div>
+                              )}
+                            </div>
+                          ) : "-"}
                         </TableCell>
                         <TableCell>
                           {profiles.get(item.scrapped_by) || "Unknown"}
