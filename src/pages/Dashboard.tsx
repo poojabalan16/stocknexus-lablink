@@ -6,6 +6,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DepartmentOverview } from "@/components/dashboard/DepartmentOverview";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
+import { StockFlowDashboard } from "@/components/dashboard/StockFlowDashboard";
 
 
 const Dashboard = () => {
@@ -70,6 +71,8 @@ const Dashboard = () => {
         </div>
 
         <DashboardStats />
+
+        <StockFlowDashboard />
 
         <RecentAlerts />
 

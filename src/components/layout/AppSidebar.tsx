@@ -50,6 +50,7 @@ const mainMenuItems = [
 ];
 
 const departmentItems = [
+  { title: "Main Stock", url: "/departments/Main Stock", icon: Package, dept: "Main Stock" },
   { title: "IT Department", url: "/departments/IT", icon: Cpu, dept: "IT" },
   { title: "AI&DS Department", url: "/departments/AI&DS", icon: Network, dept: "AI&DS" },
   { title: "CSE Department", url: "/departments/CSE", icon: Database, dept: "CSE" },
@@ -203,6 +204,14 @@ export function AppSidebar() {
                     <NavLink to="/lecture-book" className={getNavCls}>
                       <Search className="h-4 w-4" />
                       {!collapsed && <span>Lecture Book Lookup</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/stock-distribution" className={getNavCls}>
+                      <Package className="h-4 w-4" />
+                      {!collapsed && <span>Stock Distribution</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
