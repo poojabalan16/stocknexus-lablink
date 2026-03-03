@@ -21,7 +21,6 @@ const AddItem = () => {
 
   // Form state
   const [itemCategory, setItemCategory] = useState("");
-  const [itemStatusField, setItemStatusField] = useState("available");
   const [name, setName] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
   const [lectureBookNumber, setLectureBookNumber] = useState("");
@@ -102,7 +101,6 @@ const AddItem = () => {
           specifications: specsObj,
           created_by: user.id,
           status: "available",
-          item_status: itemStatusField,
         });
 
       if (error) throw error;
@@ -391,7 +389,6 @@ const AddItem = () => {
                           <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Main Stock">Main Stock</SelectItem>
                           <SelectItem value="IT">IT</SelectItem>
                           <SelectItem value="AI&DS">AI&DS</SelectItem>
                           <SelectItem value="CSE">CSE</SelectItem>
@@ -408,22 +405,6 @@ const AddItem = () => {
                           <SelectItem value="Accounts">Accounts</SelectItem>
                           <SelectItem value="Exam Cell">Exam Cell</SelectItem>
                           <SelectItem value="Library">Library</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="itemStatus">Item Status *</Label>
-                      <Select value={itemStatusField} onValueChange={setItemStatusField}>
-                        <SelectTrigger id="itemStatus">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="available">Available</SelectItem>
-                          <SelectItem value="working">Working</SelectItem>
-                          <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
-                          <SelectItem value="outdated">Outdated</SelectItem>
-                          <SelectItem value="scrap">Scrap</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

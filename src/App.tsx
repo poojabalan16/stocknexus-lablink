@@ -26,7 +26,6 @@ import PurchaseDetail from "./pages/PurchaseDetail";
 import ItemMovements from "./pages/ItemMovements";
 import ItemRequests from "./pages/ItemRequests";
 import LectureBookLookup from "./pages/LectureBookLookup";
-import StockDistribution from "./pages/StockDistribution";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,7 +60,6 @@ const App = () => (
           <Route path="/movements" element={<ItemMovements />} />
           <Route path="/requests" element={<ItemRequests />} />
           <Route path="/lecture-book" element={<LectureBookLookup />} />
-          <Route path="/stock-distribution" element={<StockDistribution />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
