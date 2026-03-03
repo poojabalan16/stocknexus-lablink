@@ -152,6 +152,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_working: boolean
+          item_status: string
           lecture_book_number: string | null
           location: string | null
           low_stock_threshold: number | null
@@ -173,6 +174,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_working?: boolean
+          item_status?: string
           lecture_book_number?: string | null
           location?: string | null
           low_stock_threshold?: number | null
@@ -194,6 +196,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_working?: boolean
+          item_status?: string
           lecture_book_number?: string | null
           location?: string | null
           low_stock_threshold?: number | null
@@ -754,6 +757,7 @@ export type Database = {
         | "CIVIL"
         | "CSBS"
         | "MBA"
+        | "Main Stock"
       item_category:
         | "hardware"
         | "network"
@@ -761,6 +765,12 @@ export type Database = {
         | "office"
         | "lab"
         | "other"
+      item_status:
+        | "working"
+        | "scrap"
+        | "outdated"
+        | "under_maintenance"
+        | "available"
       nature_of_service:
         | "maintenance"
         | "repair"
@@ -928,6 +938,7 @@ export const Constants = {
         "CIVIL",
         "CSBS",
         "MBA",
+        "Main Stock",
       ],
       item_category: [
         "hardware",
@@ -936,6 +947,13 @@ export const Constants = {
         "office",
         "lab",
         "other",
+      ],
+      item_status: [
+        "working",
+        "scrap",
+        "outdated",
+        "under_maintenance",
+        "available",
       ],
       nature_of_service: [
         "maintenance",
