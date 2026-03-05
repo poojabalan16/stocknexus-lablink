@@ -76,7 +76,19 @@ const Dashboard = () => {
 
         <DashboardStats />
 
-        <RecentAlerts />
+        <StockFlowVisualization />
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <StatusDistributionChart />
+          <DepartmentStockChart />
+        </div>
+
+        <CSBSCabinStock />
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <RecentAlerts />
+          <DistributionHistory />
+        </div>
 
         <DepartmentOverview />
       </div>
