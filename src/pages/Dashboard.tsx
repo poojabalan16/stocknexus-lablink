@@ -3,15 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { DepartmentOverview } from "@/components/dashboard/DepartmentOverview";
+import { DashboardSummaryCards } from "@/components/dashboard/DashboardSummaryCards";
+import { DepartmentStockTable } from "@/components/dashboard/DepartmentStockTable";
+import { CSBSCabinTable } from "@/components/dashboard/CSBSCabinTable";
+import { RecentActivityTable } from "@/components/dashboard/RecentActivityTable";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
-import { StockFlowVisualization } from "@/components/dashboard/StockFlowVisualization";
-import { StatusDistributionChart } from "@/components/dashboard/StatusDistributionChart";
-import { DepartmentStockChart } from "@/components/dashboard/DepartmentStockChart";
-import { CSBSCabinStock } from "@/components/dashboard/CSBSCabinStock";
-import { DistributionHistory } from "@/components/dashboard/DistributionHistory";
-
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -20,27 +16,19 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
-        if (!session) {
-          navigate("/auth");
-        }
+        if (!session) navigate("/auth");
       }
     );
 
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      
-      if (!session) {
-        navigate("/auth");
-      }
+      if (!session) navigate("/auth");
     });
 
     return () => subscription.unsubscribe();
@@ -74,23 +62,15 @@ const Dashboard = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-0" />
         </div>
 
-        <DashboardStats />
+        <DashboardSummaryCards />
 
-        <StockFlowVisualization />
+        <DepartmentStockTable />
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <StatusDistributionChart />
-          <DepartmentStockChart />
-        </div>
+        <CSBSCabinTable />
 
-        <CSBSCabinStock />
+        <RecentActivityTable />
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <RecentAlerts />
-          <DistributionHistory />
-        </div>
-
-        <DepartmentOverview />
+        <RecentAlerts />
       </div>
     </DashboardLayout>
   );
