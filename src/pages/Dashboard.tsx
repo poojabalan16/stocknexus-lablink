@@ -6,6 +6,11 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DepartmentOverview } from "@/components/dashboard/DepartmentOverview";
 import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
+import { StockFlowVisualization } from "@/components/dashboard/StockFlowVisualization";
+import { StatusDistributionChart } from "@/components/dashboard/StatusDistributionChart";
+import { DepartmentStockChart } from "@/components/dashboard/DepartmentStockChart";
+import { CSBSCabinStock } from "@/components/dashboard/CSBSCabinStock";
+import { DistributionHistory } from "@/components/dashboard/DistributionHistory";
 
 
 const Dashboard = () => {
