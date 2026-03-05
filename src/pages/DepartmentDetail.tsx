@@ -49,7 +49,7 @@ const DepartmentDetail = () => {
   const [editingCabinId, setEditingCabinId] = useState<string | null>(null);
   const [editingCabinValue, setEditingCabinValue] = useState("");
 
-  const isWorkingStatusDept = department === "IT" || department === "AI&DS" || department === "CSE";
+  const isWorkingStatusDept = department === "IT" || department === "AI&DS" || department === "CSE" || department === "CSBS";
 
   useEffect(() => {
     checkAuth();
