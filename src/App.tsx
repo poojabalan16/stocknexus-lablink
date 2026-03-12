@@ -26,6 +26,7 @@ import PurchaseDetail from "./pages/PurchaseDetail";
 import ItemMovements from "./pages/ItemMovements";
 import ItemRequests from "./pages/ItemRequests";
 import LectureBookLookup from "./pages/LectureBookLookup";
+import StockDistribution from "./pages/StockDistribution";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
