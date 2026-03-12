@@ -38,6 +38,7 @@ import {
   Building2,
   GraduationCap,
   Briefcase,
+  Send,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
