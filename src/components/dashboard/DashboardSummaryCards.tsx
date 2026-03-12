@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Warehouse, CheckCircle2, XCircle, AlertTriangle, Wrench, TrendingUp, Archive } from "lucide-react";
+import { Warehouse, CheckCircle2, XCircle, AlertTriangle, Wrench, TrendingUp } from "lucide-react";
 
 interface SummaryData {
   mainStock: number;
@@ -12,20 +12,36 @@ interface SummaryData {
   maintenance: number;
 }
 
+async function fetchAllRows(table: string, select: string, filters?: (q: any) => any) {
+  let allData: any[] = [];
+  let from = 0;
+  const batchSize = 1000;
+  while (true) {
+    let query = supabase.from(table).select(select).range(from, from + batchSize - 1);
+    if (filters) query = filters(query);
+    const { data } = await query;
+    if (!data || data.length === 0) break;
+    allData = [...allData, ...data];
+    if (data.length < batchSize) break;
+    from += batchSize;
+  }
+  return allData;
+}
+
 export function DashboardSummaryCards() {
   const [data, setData] = useState<SummaryData>({
     mainStock: 0, distributed: 0, working: 0, scrap: 0, outdated: 0, maintenance: 0,
   });
 
   const fetchData = async () => {
-    const [itemsRes, distRes] = await Promise.all([
-      supabase.from("inventory_items").select("quantity, department, item_status"),
-      supabase.from("distribution_records").select("quantity"),
+    const [items, distItems] = await Promise.all([
+      fetchAllRows("inventory_items", "quantity, department, item_status"),
+      fetchAllRows("distribution_records", "quantity"),
     ]);
 
     const summary: SummaryData = { mainStock: 0, distributed: 0, working: 0, scrap: 0, outdated: 0, maintenance: 0 };
 
-    itemsRes.data?.forEach((item) => {
+    items.forEach((item: any) => {
       if (item.department === "Main Stock") summary.mainStock += item.quantity;
       const s = item.item_status;
       if (s === "working") summary.working += item.quantity;
@@ -34,7 +50,7 @@ export function DashboardSummaryCards() {
       else if (s === "under_maintenance") summary.maintenance += item.quantity;
     });
 
-    summary.distributed = distRes.data?.reduce((s, r) => s + r.quantity, 0) || 0;
+    summary.distributed = distItems.reduce((s: number, r: any) => s + r.quantity, 0);
     setData(summary);
   };
 
