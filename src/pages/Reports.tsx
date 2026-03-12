@@ -33,13 +33,22 @@ const Reports = () => {
   const generateReport = async () => {
     setLoading(true);
     try {
-      let query = supabase.from("inventory_items").select("*");
-      
-      if (department !== "all") {
-        query = query.eq("department", department as any);
+      let allData: any[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        let query = supabase.from("inventory_items").select("*").range(from, from + batchSize - 1);
+        if (department !== "all") {
+          query = query.eq("department", department as any);
+        }
+        const { data: batch, error: batchError } = await query;
+        if (batchError) throw batchError;
+        if (!batch || batch.length === 0) break;
+        allData = [...allData, ...batch];
+        if (batch.length < batchSize) break;
+        from += batchSize;
       }
-
-      const { data: rawData, error } = await query;
+      const rawData = allData;
       if (error) throw error;
 
       // Filter for low stock if needed
