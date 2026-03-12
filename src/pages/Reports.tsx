@@ -507,9 +507,20 @@ const Reports = () => {
                       <SelectItem value="IT">IT</SelectItem>
                       <SelectItem value="AI&DS">AI&DS</SelectItem>
                       <SelectItem value="CSE">CSE</SelectItem>
+                      <SelectItem value="ECE">ECE</SelectItem>
+                      <SelectItem value="EEE">EEE</SelectItem>
+                      <SelectItem value="CIVIL">CIVIL</SelectItem>
+                      <SelectItem value="CSBS">CSBS</SelectItem>
+                      <SelectItem value="MBA">MBA</SelectItem>
                       <SelectItem value="Physics">Physics</SelectItem>
                       <SelectItem value="Chemistry">Chemistry</SelectItem>
                       <SelectItem value="Bio-tech">Bio-tech</SelectItem>
+                      <SelectItem value="Chemical">Chemical</SelectItem>
+                      <SelectItem value="Mechanical">Mechanical</SelectItem>
+                      <SelectItem value="Accounts">Accounts</SelectItem>
+                      <SelectItem value="Exam Cell">Exam Cell</SelectItem>
+                      <SelectItem value="Library">Library</SelectItem>
+                      <SelectItem value="Main Stock">Main Stock</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
