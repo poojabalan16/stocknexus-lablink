@@ -49,7 +49,11 @@ const Reports = () => {
         from += batchSize;
       }
       const rawData = allData;
-      if (error) throw error;
+      if (!rawData || rawData.length === 0) {
+        toast.error("No data available for the selected filters");
+        setLoading(false);
+        return;
+      }
 
       // Filter for low stock if needed
       let data = rawData;
