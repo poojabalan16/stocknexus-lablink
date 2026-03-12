@@ -33,14 +33,27 @@ const Reports = () => {
   const generateReport = async () => {
     setLoading(true);
     try {
-      let query = supabase.from("inventory_items").select("*");
-      
-      if (department !== "all") {
-        query = query.eq("department", department as any);
+      let allData: any[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        let query = supabase.from("inventory_items").select("*").range(from, from + batchSize - 1);
+        if (department !== "all") {
+          query = query.eq("department", department as any);
+        }
+        const { data: batch, error: batchError } = await query;
+        if (batchError) throw batchError;
+        if (!batch || batch.length === 0) break;
+        allData = [...allData, ...batch];
+        if (batch.length < batchSize) break;
+        from += batchSize;
       }
-
-      const { data: rawData, error } = await query;
-      if (error) throw error;
+      const rawData = allData;
+      if (!rawData || rawData.length === 0) {
+        toast.error("No data available for the selected filters");
+        setLoading(false);
+        return;
+      }
 
       // Filter for low stock if needed
       let data = rawData;
@@ -444,9 +457,20 @@ const Reports = () => {
                       <SelectItem value="IT">IT</SelectItem>
                       <SelectItem value="AI&DS">AI&DS</SelectItem>
                       <SelectItem value="CSE">CSE</SelectItem>
+                      <SelectItem value="ECE">ECE</SelectItem>
+                      <SelectItem value="EEE">EEE</SelectItem>
+                      <SelectItem value="CIVIL">CIVIL</SelectItem>
+                      <SelectItem value="CSBS">CSBS</SelectItem>
+                      <SelectItem value="MBA">MBA</SelectItem>
                       <SelectItem value="Physics">Physics</SelectItem>
                       <SelectItem value="Chemistry">Chemistry</SelectItem>
                       <SelectItem value="Bio-tech">Bio-tech</SelectItem>
+                      <SelectItem value="Chemical">Chemical</SelectItem>
+                      <SelectItem value="Mechanical">Mechanical</SelectItem>
+                      <SelectItem value="Accounts">Accounts</SelectItem>
+                      <SelectItem value="Exam Cell">Exam Cell</SelectItem>
+                      <SelectItem value="Library">Library</SelectItem>
+                      <SelectItem value="Main Stock">Main Stock</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -496,9 +520,20 @@ const Reports = () => {
                       <SelectItem value="IT">IT</SelectItem>
                       <SelectItem value="AI&DS">AI&DS</SelectItem>
                       <SelectItem value="CSE">CSE</SelectItem>
+                      <SelectItem value="ECE">ECE</SelectItem>
+                      <SelectItem value="EEE">EEE</SelectItem>
+                      <SelectItem value="CIVIL">CIVIL</SelectItem>
+                      <SelectItem value="CSBS">CSBS</SelectItem>
+                      <SelectItem value="MBA">MBA</SelectItem>
                       <SelectItem value="Physics">Physics</SelectItem>
                       <SelectItem value="Chemistry">Chemistry</SelectItem>
                       <SelectItem value="Bio-tech">Bio-tech</SelectItem>
+                      <SelectItem value="Chemical">Chemical</SelectItem>
+                      <SelectItem value="Mechanical">Mechanical</SelectItem>
+                      <SelectItem value="Accounts">Accounts</SelectItem>
+                      <SelectItem value="Exam Cell">Exam Cell</SelectItem>
+                      <SelectItem value="Library">Library</SelectItem>
+                      <SelectItem value="Main Stock">Main Stock</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

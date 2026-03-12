@@ -25,13 +25,23 @@ export function DepartmentStockTable() {
   const [items, setItems] = useState<DeptItem[]>([]);
 
   const fetchData = async () => {
-    const { data } = await supabase
-      .from("inventory_items")
-      .select("department, name, quantity, item_status")
-      .neq("department", "Main Stock")
-      .order("department")
-      .order("name");
-    if (data) setItems(data);
+    let allData: DeptItem[] = [];
+    let from = 0;
+    const batchSize = 1000;
+    while (true) {
+      const { data } = await supabase
+        .from("inventory_items")
+        .select("department, name, quantity, item_status")
+        .neq("department", "Main Stock")
+        .order("department")
+        .order("name")
+        .range(from, from + batchSize - 1);
+      if (!data || data.length === 0) break;
+      allData = [...allData, ...data];
+      if (data.length < batchSize) break;
+      from += batchSize;
+    }
+    setItems(allData);
   };
 
   useEffect(() => {

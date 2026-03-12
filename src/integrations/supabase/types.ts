@@ -95,6 +95,7 @@ export type Database = {
         Row: {
           auth_department: string
           authorized_person_name: string
+          cabin_number: string | null
           contact_number: string
           created_at: string
           designation: string
@@ -102,6 +103,7 @@ export type Database = {
           distributed_at: string
           distributed_by: string
           employee_id: string
+          file_url: string | null
           from_department: string
           id: string
           item_id: string | null
@@ -114,6 +116,7 @@ export type Database = {
         Insert: {
           auth_department: string
           authorized_person_name: string
+          cabin_number?: string | null
           contact_number: string
           created_at?: string
           designation: string
@@ -121,6 +124,7 @@ export type Database = {
           distributed_at?: string
           distributed_by: string
           employee_id: string
+          file_url?: string | null
           from_department?: string
           id?: string
           item_id?: string | null
@@ -133,6 +137,7 @@ export type Database = {
         Update: {
           auth_department?: string
           authorized_person_name?: string
+          cabin_number?: string | null
           contact_number?: string
           created_at?: string
           designation?: string
@@ -140,6 +145,7 @@ export type Database = {
           distributed_at?: string
           distributed_by?: string
           employee_id?: string
+          file_url?: string | null
           from_department?: string
           id?: string
           item_id?: string | null

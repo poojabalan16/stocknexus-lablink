@@ -38,6 +38,7 @@ import {
   Building2,
   GraduationCap,
   Briefcase,
+  Send,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -203,6 +204,14 @@ export function AppSidebar() {
                     <NavLink to="/lecture-book" className={getNavCls}>
                       <Search className="h-4 w-4" />
                       {!collapsed && <span>Lecture Book Lookup</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/stock-distribution" className={getNavCls}>
+                      <Send className="h-4 w-4" />
+                      {!collapsed && <span>Stock Distribution</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

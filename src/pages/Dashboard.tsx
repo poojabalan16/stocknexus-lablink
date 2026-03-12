@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardSummaryCards } from "@/components/dashboard/DashboardSummaryCards";
+import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
+import { DepartmentCards } from "@/components/dashboard/DepartmentCards";
 import { DepartmentStockTable } from "@/components/dashboard/DepartmentStockTable";
 import { CSBSCabinTable } from "@/components/dashboard/CSBSCabinTable";
 import { RecentActivityTable } from "@/components/dashboard/RecentActivityTable";
@@ -12,20 +14,17 @@ import { RecentAlerts } from "@/components/dashboard/RecentAlerts";
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setSession(session);
         setUser(session?.user ?? null);
         if (!session) navigate("/auth");
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
       if (!session) navigate("/auth");
@@ -62,7 +61,11 @@ const Dashboard = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-0" />
         </div>
 
+        <DashboardSearch />
+
         <DashboardSummaryCards />
+
+        <DepartmentCards />
 
         <DepartmentStockTable />
 
