@@ -12,14 +12,19 @@ interface SummaryData {
   maintenance: number;
 }
 
-async function fetchAllRows(table: string, select: string, filters?: (q: any) => any) {
+async function fetchAllRows(table: "inventory_items" | "distribution_records", select: string) {
   let allData: any[] = [];
   let from = 0;
   const batchSize = 1000;
   while (true) {
-    let query = supabase.from(table).select(select).range(from, from + batchSize - 1);
-    if (filters) query = filters(query);
-    const { data } = await query;
+    const { data } = await supabase.from(table).select(select).range(from, from + batchSize - 1);
+    if (!data || data.length === 0) break;
+    allData = [...allData, ...data];
+    if (data.length < batchSize) break;
+    from += batchSize;
+  }
+  return allData;
+}
     if (!data || data.length === 0) break;
     allData = [...allData, ...data];
     if (data.length < batchSize) break;
