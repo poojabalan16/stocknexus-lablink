@@ -25,13 +25,8 @@ async function fetchAllRows(table: "inventory_items" | "distribution_records", s
   }
   return allData;
 }
-    if (!data || data.length === 0) break;
-    allData = [...allData, ...data];
-    if (data.length < batchSize) break;
-    from += batchSize;
-  }
-  return allData;
-}
+
+
 
 export function DashboardSummaryCards() {
   const [data, setData] = useState<SummaryData>({
