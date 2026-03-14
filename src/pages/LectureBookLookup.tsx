@@ -90,7 +90,7 @@ const LectureBookLookup = () => {
 
   const exportPDF = () => {
     const doc = new jsPDF();
-    doc.text(`Lecture Book Number: ${selectedLBN}`, 14, 20);
+    doc.text(`Ledger Book Number: ${selectedLBN}`, 14, 20);
     doc.text(`Total Stock: ${totalStock}`, 14, 30);
     autoTable(doc, {
       startY: 40,
@@ -106,15 +106,15 @@ const LectureBookLookup = () => {
     <DashboardLayout>
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold">Lecture Book Number Lookup</h1>
-          <p className="text-muted-foreground">Search and view item details by Lecture Book Number</p>
+          <h1 className="text-3xl font-bold">Ledger Book Number Lookup</h1>
+          <p className="text-muted-foreground">Search and view item details by Ledger Book Number</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Search className="h-5 w-5" />
-              Search Lecture Book Number
+              Search Ledger Book Number
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -122,7 +122,7 @@ const LectureBookLookup = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Type to search lecture book numbers..."
+                  placeholder="Type to search ledger book numbers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"

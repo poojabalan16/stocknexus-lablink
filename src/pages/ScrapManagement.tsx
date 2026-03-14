@@ -10,12 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Trash2, Search, Plus, Package, Calendar, User, IndianRupee, Upload } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { format } from "date-fns";
 import { Constants } from "@/integrations/supabase/types";
+import * as XLSX from "xlsx";
 
 interface ScrapItem {
   id: string;
@@ -74,9 +76,11 @@ const ScrapManagement = () => {
   const [scrapValue, setScrapValue] = useState<string>("");
   const [vendorName, setVendorName] = useState("");
   const [vendorContact, setVendorContact] = useState("");
-  const [billFile, setBillFile] = useState<File | null>(null);
-  const [disposalCertFile, setDisposalCertFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Bulk import state
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [bulkImporting, setBulkImporting] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -170,23 +174,6 @@ const ScrapManagement = () => {
     }
   };
 
-  const uploadFile = async (file: File, folder: string): Promise<string | null> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-    
-    const { error } = await supabase.storage
-      .from('service-bills')
-      .upload(`${folder}/${fileName}`, file);
-
-    if (error) throw error;
-
-    const { data: urlData } = supabase.storage
-      .from('service-bills')
-      .getPublicUrl(`${folder}/${fileName}`);
-    
-    return urlData.publicUrl;
-  };
-
   const handleScrapItem = async () => {
     if (!selectedItem || !scrapReason || !userId) {
       toast.error("Please select an item and provide a reason");
@@ -208,16 +195,6 @@ const ScrapManagement = () => {
     setSubmitting(true);
 
     try {
-      let billUrl: string | null = null;
-      let disposalCertUrl: string | null = null;
-
-      if (billFile) {
-        billUrl = await uploadFile(billFile, 'scrap-bills');
-      }
-      if (disposalCertFile) {
-        disposalCertUrl = await uploadFile(disposalCertFile, 'scrap-disposal');
-      }
-
       const { error: scrapError } = await supabase
         .from("scrap_items")
         .insert({
@@ -234,8 +211,6 @@ const ScrapManagement = () => {
           vendor_name: vendorName || null,
           vendor_contact: vendorContact || null,
           lecture_book_number: item.lecture_book_number || null,
-          bill_url: billUrl,
-          disposal_certificate_url: disposalCertUrl,
         });
 
       if (scrapError) throw scrapError;
@@ -276,8 +251,102 @@ const ScrapManagement = () => {
     setScrapValue("");
     setVendorName("");
     setVendorContact("");
-    setBillFile(null);
-    setDisposalCertFile(null);
+  };
+
+  const parseExcelFile = async (file: File): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          resolve(jsonData);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsBinaryString(file);
+    });
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkFile || !userId) {
+      toast.error("Please select a file");
+      return;
+    }
+
+    const ext = bulkFile.name.split('.').pop()?.toLowerCase();
+    if (!['xlsx', 'xls', 'csv'].includes(ext || '')) {
+      toast.error("Only Excel and CSV files are supported for bulk import");
+      return;
+    }
+
+    setBulkImporting(true);
+    try {
+      let parsedData: any[] = [];
+
+      if (ext === 'xlsx' || ext === 'xls') {
+        parsedData = await parseExcelFile(bulkFile);
+      } else {
+        const text = await bulkFile.text();
+        const lines = text.split("\n").filter(line => line.trim());
+        if (lines.length < 2) { toast.error("File is empty"); setBulkImporting(false); return; }
+        const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(",").map(v => v.trim());
+          const row: any = {};
+          headers.forEach((header, index) => { row[header] = values[index]; });
+          parsedData.push(row);
+        }
+      }
+
+      if (parsedData.length === 0) { toast.error("No data found in file"); setBulkImporting(false); return; }
+
+      const requiredFields = ["item_name", "department", "reason"];
+      const availableFields = Object.keys(parsedData[0]).map(k => k.toLowerCase());
+      const missing = requiredFields.filter(f => !availableFields.includes(f));
+      if (missing.length > 0) {
+        toast.error(`Missing required columns: ${missing.join(", ")}. Required: item_name, department, reason`);
+        setBulkImporting(false);
+        return;
+      }
+
+      const scrapRecords = parsedData.map((row: any) => {
+        const norm: any = {};
+        Object.keys(row).forEach(k => { norm[k.toLowerCase()] = row[k]; });
+        return {
+          item_name: norm.item_name,
+          department: norm.department as any,
+          quantity: parseInt(norm.quantity) || 1,
+          reason: norm.reason,
+          scrapped_by: userId,
+          notes: norm.notes || null,
+          scrap_value: norm.scrap_value ? parseFloat(norm.scrap_value) : null,
+          vendor_name: norm.vendor_name || null,
+          vendor_contact: norm.vendor_contact || null,
+          lecture_book_number: norm.lecture_book_number || norm.ledger_book_number || null,
+          item_model: norm.item_model || norm.model || null,
+          item_serial_number: norm.item_serial_number || norm.serial_number || null,
+        };
+      }).filter((r: any) => r.item_name && r.department && r.reason);
+
+      if (scrapRecords.length === 0) { toast.error("No valid records found"); setBulkImporting(false); return; }
+
+      const { error } = await supabase.from("scrap_items").insert(scrapRecords);
+      if (error) throw error;
+
+      toast.success(`Successfully imported ${scrapRecords.length} scrap record(s)!`);
+      setBulkFile(null);
+      fetchScrapItems();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to import scrap items");
+    } finally {
+      setBulkImporting(false);
+    }
   };
 
   const filteredInventoryItems = inventoryItems.filter(item => 
@@ -453,29 +522,6 @@ const ScrapManagement = () => {
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="bill-file">Bill / Invoice</Label>
-                    <Input
-                      id="bill-file"
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) => setBillFile(e.target.files?.[0] || null)}
-                    />
-                    <p className="text-xs text-muted-foreground">PDF, PNG, JPG (Max 5MB)</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="disposal-cert">Disposal Certificate</Label>
-                    <Input
-                      id="disposal-cert"
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) => setDisposalCertFile(e.target.files?.[0] || null)}
-                    />
-                    <p className="text-xs text-muted-foreground">PDF, PNG, JPG (Max 5MB)</p>
-                  </div>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="notes">Additional Notes</Label>
                   <Textarea
@@ -503,6 +549,36 @@ const ScrapManagement = () => {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Bulk Import Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Bulk Import Scrap Items
+            </CardTitle>
+            <CardDescription>Upload Excel or CSV file to import multiple scrap records at once</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex-1 space-y-2">
+                <Label>Select File (Excel or CSV)</Label>
+                <Input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={(e) => setBulkFile(e.target.files?.[0] || null)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Required columns: item_name, department, reason. Optional: quantity, scrap_value, vendor_name, vendor_contact, notes, ledger_book_number, model, serial_number
+                </p>
+              </div>
+              <Button onClick={handleBulkImport} disabled={bulkImporting || !bulkFile} className="gap-2">
+                <Upload className="h-4 w-4" />
+                {bulkImporting ? "Importing..." : "Import"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Statistics */}
         <div className="grid gap-4 md:grid-cols-4">

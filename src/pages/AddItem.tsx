@@ -322,7 +322,7 @@ const AddItem = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="lbn">Lecture Book Number</Label>
+                      <Label htmlFor="lbn">Ledger Book Number</Label>
                       <Input
                         id="lbn"
                         value={lectureBookNumber}

@@ -203,7 +203,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink to="/lecture-book" className={getNavCls}>
                       <Search className="h-4 w-4" />
-                      {!collapsed && <span>Lecture Book Lookup</span>}
+                      {!collapsed && <span>Ledger Book Lookup</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

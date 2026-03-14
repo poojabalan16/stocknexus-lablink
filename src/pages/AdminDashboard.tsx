@@ -22,9 +22,26 @@ import {
   Users, Package, AlertTriangle, TrendingUp, 
   UserCheck, Clock, Shield, Edit, Trash2, Search 
 } from "lucide-react";
+import { Constants } from "@/integrations/supabase/types";
 
-const DEPARTMENTS = ["IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech", "Chemical", "Mechanical"] as const;
+const ALL_DEPARTMENTS = Constants.public.Enums.department;
 const ITEMS_PER_PAGE = 10;
+
+async function fetchAllRows(table: "inventory_items" | "alerts" | "registration_requests" | "profiles", select: string, filters?: (q: any) => any) {
+  let allData: any[] = [];
+  let from = 0;
+  const batchSize = 1000;
+  while (true) {
+    let query = supabase.from(table).select(select).range(from, from + batchSize - 1);
+    if (filters) query = filters(query);
+    const { data } = await query;
+    if (!data || data.length === 0) break;
+    allData = [...allData, ...data];
+    if (data.length < batchSize) break;
+    from += batchSize;
+  }
+  return allData;
+}
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -69,28 +86,22 @@ const AdminDashboard = () => {
 
   const fetchAdminData = async () => {
     try {
-      // Fetch all statistics
-      const [itemsRes, alertsRes, requestsRes, profilesRes] = await Promise.all([
-        supabase.from("inventory_items").select("*"),
-        supabase.from("alerts").select("*").eq("is_resolved", false),
-        supabase.from("registration_requests").select("*").eq("status", "pending"),
-        supabase.from("profiles").select("*"),
+      const [items, alerts, requests, users] = await Promise.all([
+        fetchAllRows("inventory_items", "*"),
+        fetchAllRows("alerts", "*", (q: any) => q.eq("is_resolved", false)),
+        fetchAllRows("registration_requests", "*", (q: any) => q.eq("status", "pending")),
+        fetchAllRows("profiles", "*"),
       ]);
 
-      const items = itemsRes.data || [];
-      const alerts = alertsRes.data || [];
-      const requests = requestsRes.data || [];
-      const users = profilesRes.data || [];
-
       // Calculate department stats
-      const deptStats = items.reduce((acc, item) => {
+      const deptStats = items.reduce((acc: any, item: any) => {
         acc[item.department] = (acc[item.department] || 0) + 1;
         return acc;
       }, {} as any);
 
       // Aggregate items by name+department for accurate low stock count
       const itemAggregates = new Map<string, { totalQty: number; threshold: number }>();
-      items.forEach(item => {
+      items.forEach((item: any) => {
         const key = `${item.department}|${item.name}`;
         if (!itemAggregates.has(key)) {
           itemAggregates.set(key, { totalQty: 0, threshold: item.low_stock_threshold || 5 });
@@ -153,7 +164,8 @@ const AdminDashboard = () => {
         item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.cabin_number?.toLowerCase().includes(searchQuery.toLowerCase());
+        item.cabin_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.lecture_book_number?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesDepartment = departmentFilter === "all" || item.department === departmentFilter;
       
@@ -320,7 +332,7 @@ const AdminDashboard = () => {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search by name, model, serial number..."
+                      placeholder="Search by name, model, serial number, ledger book..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
@@ -332,7 +344,7 @@ const AdminDashboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Departments</SelectItem>
-                      {DEPARTMENTS.map((dept) => (
+                      {ALL_DEPARTMENTS.map((dept) => (
                         <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                       ))}
                     </SelectContent>
@@ -442,63 +454,53 @@ const AdminDashboard = () => {
           <TabsContent value="activity" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Recent System Activity</CardTitle>
-                <CardDescription>Latest alerts and system events</CardDescription>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Latest system alerts and notifications</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start gap-4 p-4 border rounded-lg">
-                      <AlertTriangle className={`h-5 w-5 mt-0.5 ${
-                        activity.severity === "high" ? "text-destructive" : 
-                        activity.severity === "medium" ? "text-orange-500" : 
-                        "text-yellow-500"
-                      }`} />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant={activity.is_resolved ? "default" : "destructive"}>
-                            {activity.alert_type}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Message</TableHead>
+                      <TableHead>Severity</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentActivity.map((alert) => (
+                      <TableRow key={alert.id}>
+                        <TableCell>
+                          <Badge variant="outline">{alert.alert_type}</Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[300px] truncate">{alert.message}</TableCell>
+                        <TableCell>
+                          <Badge variant={alert.severity === "high" ? "destructive" : "secondary"}>
+                            {alert.severity}
                           </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(activity.created_at).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="mt-1">{activity.message}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={alert.is_resolved ? "default" : "outline"} className={alert.is_resolved ? "bg-success" : ""}>
+                            {alert.is_resolved ? "Resolved" : "Pending"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{new Date(alert.created_at).toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    ))}
+                    {recentActivity.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No recent activity
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <Button onClick={() => navigate("/users")}>
-                <UserCheck className="h-4 w-4 mr-2" />
-                Manage Users
-              </Button>
-              <Button onClick={() => navigate("/inventory/add")}>
-                <Package className="h-4 w-4 mr-2" />
-                Add New Item
-              </Button>
-              <Button onClick={() => navigate("/alerts")}>
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                View All Alerts
-              </Button>
-              <Button onClick={() => navigate("/reports")}>
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Generate Reports
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );
