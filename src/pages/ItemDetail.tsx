@@ -27,6 +27,8 @@ interface InventoryItem {
   specifications: any;
   created_at: string;
   unit_price?: number | null;
+  cabin_number?: string | null;
+  lecture_book_number?: string | null;
 }
 
 const ItemDetail = () => {
@@ -46,6 +48,7 @@ const ItemDetail = () => {
   const [lowStockThreshold, setLowStockThreshold] = useState("");
   const [location, setLocation] = useState("");
   const [cabinNumber, setCabinNumber] = useState("");
+  const [lectureBookNumber, setLectureBookNumber] = useState("");
   const [specifications, setSpecifications] = useState("");
 
   useEffect(() => {
@@ -89,9 +92,10 @@ const ItemDetail = () => {
       setModel(data.model || "");
       setSerialNumber(data.serial_number || "");
       setQuantity(data.quantity.toString());
-      setLowStockThreshold(data.low_stock_threshold.toString());
+      setLowStockThreshold((data.low_stock_threshold || 5).toString());
       setLocation(data.location || "");
       setCabinNumber(data.cabin_number || "");
+      setLectureBookNumber(data.lecture_book_number || "");
       setSpecifications(JSON.stringify(data.specifications || {}, null, 2));
     } catch (error: any) {
       toast.error("Failed to load item details");
@@ -132,6 +136,7 @@ const ItemDetail = () => {
           low_stock_threshold: parseInt(lowStockThreshold),
           location: location || null,
           cabin_number: cabinNumber || null,
+          lecture_book_number: lectureBookNumber || null,
           specifications: specsObj,
         })
         .eq("id", item.id);
@@ -274,18 +279,27 @@ const ItemDetail = () => {
                   />
                 </div>
 
-                {(item?.department === "IT" || item?.department === "AI&DS" || item?.department === "CSE") && (
-                  <div className="space-y-2">
-                    <Label htmlFor="cabin">Cabin Number</Label>
-                    <Input
-                      id="cabin"
-                      value={cabinNumber}
-                      onChange={(e) => setCabinNumber(e.target.value)}
-                      placeholder="e.g., Cabin 101"
-                      disabled={!canEdit()}
-                    />
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="cabin">Cabin Number</Label>
+                  <Input
+                    id="cabin"
+                    value={cabinNumber}
+                    onChange={(e) => setCabinNumber(e.target.value)}
+                    placeholder="e.g., Cabin 101"
+                    disabled={!canEdit()}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lbn">Ledger Book Number</Label>
+                  <Input
+                    id="lbn"
+                    value={lectureBookNumber}
+                    onChange={(e) => setLectureBookNumber(e.target.value)}
+                    placeholder="e.g., POO8"
+                    disabled={!canEdit()}
+                  />
+                </div>
 
                 <div className="space-y-2 col-span-2">
                   <Label htmlFor="location">Location</Label>

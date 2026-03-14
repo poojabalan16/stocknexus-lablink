@@ -186,7 +186,7 @@ const ItemMovements = () => {
                       <Input value={itemName} onChange={e => setItemName(e.target.value)} required />
                     </div>
                     <div className="space-y-2">
-                      <Label>Lecture Book Number</Label>
+                      <Label>Ledger Book Number</Label>
                       <Input value={lectureBookNumber} onChange={e => setLectureBookNumber(e.target.value)} />
                     </div>
                     <div className="space-y-2">
