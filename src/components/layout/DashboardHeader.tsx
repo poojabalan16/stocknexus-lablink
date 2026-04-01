@@ -54,6 +54,8 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-6">
       <SidebarTrigger />
       
+      <img src={collegeLogo} alt="College Logo" className="h-10 object-contain hidden sm:block" />
+
       <div className="flex-1" />
 
       <DropdownMenu>
