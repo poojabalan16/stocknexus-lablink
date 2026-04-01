@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import collegeLogo from "@/assets/college-logo.png";
+
 export function DashboardHeader() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState<string>("");
