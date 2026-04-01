@@ -290,7 +290,7 @@ const ItemRequests = () => {
                     <TableHead>Qty</TableHead>
                     <TableHead>Priority</TableHead>
                     <TableHead>Status</TableHead>
-                    {userRole === "admin" && <TableHead>Actions</TableHead>}
+                    {(userRole === "admin" || userRole === "hod") && <TableHead>Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
