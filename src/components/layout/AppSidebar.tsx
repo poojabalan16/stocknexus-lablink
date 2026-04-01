@@ -228,6 +228,14 @@ export function AppSidebar() {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
+                    <NavLink to="/requests" className={getNavCls}>
+                      <ClipboardList className="h-4 w-4" />
+                      {!collapsed && <span>Item Requests</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
                     <NavLink to="/scrap" className={getNavCls}>
                       <Trash2 className="h-4 w-4" />
                       {!collapsed && <span>Scrap Management</span>}
