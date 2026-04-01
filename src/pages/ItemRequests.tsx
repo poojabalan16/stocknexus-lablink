@@ -304,12 +304,12 @@ const ItemRequests = () => {
                       <TableCell>{r.quantity_requested}</TableCell>
                       <TableCell>{getPriorityBadge(r.priority)}</TableCell>
                       <TableCell>{getStatusBadge(r.status)}</TableCell>
-                      {userRole === "admin" && (
+                      {(userRole === "admin" || userRole === "hod") && (
                         <TableCell>
                           {r.status === "pending" && (
                             <div className="flex gap-1">
                               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleApprove(r.id)}>
-                                <Check className="h-4 w-4 text-success" />
+                                <Check className="h-4 w-4 text-green-600" />
                               </Button>
                               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleReject(r.id)}>
                                 <X className="h-4 w-4 text-destructive" />
