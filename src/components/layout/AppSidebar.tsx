@@ -41,6 +41,7 @@ import {
   Send,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import collegeLogo from "@/assets/college-logo.png";
 
 const mainMenuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
