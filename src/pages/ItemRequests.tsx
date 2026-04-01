@@ -101,6 +101,19 @@ const ItemRequests = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      
+      // Check if user is admin or HOD of the requested-from department
+      const request = requests.find(r => r.id === requestId);
+      if (!request) return;
+
+      if (userRole === "hod") {
+        const { data: roleData } = await supabase.from("user_roles").select("department").eq("user_id", user.id).single();
+        if (!roleData || roleData.department !== request.requested_from_department) {
+          toast.error("You can only approve requests for your department");
+          return;
+        }
+      }
+
       await supabase.from("item_requests").update({
         status: "approved",
         approved_by: user.id,
@@ -111,14 +124,27 @@ const ItemRequests = () => {
     } catch { toast.error("Failed to approve"); }
   };
 
-  const handleReject = async (requestId: string) => {
+  const handleReject = async (requestId: string, reason?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      const request = requests.find(r => r.id === requestId);
+      if (!request) return;
+
+      if (userRole === "hod") {
+        const { data: roleData } = await supabase.from("user_roles").select("department").eq("user_id", user.id).single();
+        if (!roleData || roleData.department !== request.requested_from_department) {
+          toast.error("You can only reject requests for your department");
+          return;
+        }
+      }
+
       await supabase.from("item_requests").update({
         status: "rejected",
         approved_by: user.id,
         approved_at: new Date().toISOString(),
+        rejection_reason: reason || null,
       }).eq("id", requestId);
       toast.success("Request rejected");
       fetchRequests();
