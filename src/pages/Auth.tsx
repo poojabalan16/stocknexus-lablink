@@ -183,6 +183,7 @@ const Auth = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
+          <img src={collegeLogo} alt="College Logo" className="h-16 mx-auto mb-4 object-contain" />
           <div className="inline-flex items-center gap-3 mb-2">
             <div className="p-3 gradient-primary rounded-xl">
               <Package className="h-8 w-8 text-primary-foreground" />
