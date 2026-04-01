@@ -355,12 +355,9 @@ const Auth = () => {
                             <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="IT">IT</SelectItem>
-                            <SelectItem value="AI&DS">AI&DS</SelectItem>
-                            <SelectItem value="CSE">CSE</SelectItem>
-                            <SelectItem value="Physics">Physics</SelectItem>
-                            <SelectItem value="Chemistry">Chemistry</SelectItem>
-                            <SelectItem value="Bio-tech">Bio-tech</SelectItem>
+                            {ALL_DEPARTMENTS.map(d => (
+                              <SelectItem key={d} value={d}>{d}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
