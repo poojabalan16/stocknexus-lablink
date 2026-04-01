@@ -106,10 +106,10 @@ export function AppSidebar() {
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"}>
       <SidebarContent>
-        <div className="p-6">
+        <div className="p-4">
           <div className="flex items-center gap-2">
-            <Package className="h-8 w-8 text-primary" />
-            {!collapsed && <span className="text-xl font-bold text-primary">StockNexus</span>}
+            <img src={collegeLogo} alt="College Logo" className="h-8 object-contain" />
+            {!collapsed && <span className="text-lg font-bold text-primary">StockNexus</span>}
           </div>
         </div>
 
