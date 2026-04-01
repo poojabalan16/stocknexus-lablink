@@ -10,6 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Mail, Lock, User, Building2, Shield, ArrowRight, KeyRound } from "lucide-react";
+import { Constants } from "@/integrations/supabase/types";
+import collegeLogo from "@/assets/college-logo.png";
+
+const ALL_DEPARTMENTS = Constants.public.Enums.department.filter(d => d !== "Main Stock");
 
 const Auth = () => {
   const navigate = useNavigate();
