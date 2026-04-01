@@ -10,6 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Mail, Lock, User, Building2, Shield, ArrowRight, KeyRound } from "lucide-react";
+import { Constants } from "@/integrations/supabase/types";
+import collegeLogo from "@/assets/college-logo.png";
+
+const ALL_DEPARTMENTS = Constants.public.Enums.department.filter(d => d !== "Main Stock");
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -179,6 +183,7 @@ const Auth = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
+          <img src={collegeLogo} alt="College Logo" className="h-16 mx-auto mb-4 object-contain" />
           <div className="inline-flex items-center gap-3 mb-2">
             <div className="p-3 gradient-primary rounded-xl">
               <Package className="h-8 w-8 text-primary-foreground" />
@@ -350,12 +355,9 @@ const Auth = () => {
                             <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="IT">IT</SelectItem>
-                            <SelectItem value="AI&DS">AI&DS</SelectItem>
-                            <SelectItem value="CSE">CSE</SelectItem>
-                            <SelectItem value="Physics">Physics</SelectItem>
-                            <SelectItem value="Chemistry">Chemistry</SelectItem>
-                            <SelectItem value="Bio-tech">Bio-tech</SelectItem>
+                            {ALL_DEPARTMENTS.map(d => (
+                              <SelectItem key={d} value={d}>{d}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>

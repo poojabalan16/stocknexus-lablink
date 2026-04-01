@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import collegeLogo from "@/assets/college-logo.png";
+
 export function DashboardHeader() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState<string>("");
@@ -52,6 +54,8 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-6">
       <SidebarTrigger />
       
+      <img src={collegeLogo} alt="College Logo" className="h-10 object-contain hidden sm:block" />
+
       <div className="flex-1" />
 
       <DropdownMenu>

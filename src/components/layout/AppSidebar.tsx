@@ -41,6 +41,7 @@ import {
   Send,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import collegeLogo from "@/assets/college-logo.png";
 
 const mainMenuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -105,10 +106,10 @@ export function AppSidebar() {
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"}>
       <SidebarContent>
-        <div className="p-6">
+        <div className="p-4">
           <div className="flex items-center gap-2">
-            <Package className="h-8 w-8 text-primary" />
-            {!collapsed && <span className="text-xl font-bold text-primary">StockNexus</span>}
+            <img src={collegeLogo} alt="College Logo" className="h-8 object-contain" />
+            {!collapsed && <span className="text-lg font-bold text-primary">StockNexus</span>}
           </div>
         </div>
 
@@ -225,6 +226,14 @@ export function AppSidebar() {
             <SidebarGroupLabel>Management</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/requests" className={getNavCls}>
+                      <ClipboardList className="h-4 w-4" />
+                      {!collapsed && <span>Item Requests</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink to="/scrap" className={getNavCls}>
