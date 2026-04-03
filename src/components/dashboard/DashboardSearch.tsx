@@ -84,12 +84,17 @@ export function DashboardSearch() {
 
   const handleSearch = (value: string) => {
     setQuery(value);
-    performSearch(value, departmentFilter);
+    performSearch(value, departmentFilter, statusFilter);
   };
 
   const handleDeptChange = (val: string) => {
     setDepartmentFilter(val);
-    performSearch(query, val);
+    performSearch(query, val, statusFilter);
+  };
+
+  const handleStatusChange = (val: string) => {
+    setStatusFilter(val);
+    performSearch(query, departmentFilter, val);
   };
 
   const highlightMatch = (text: string, search: string) => {
