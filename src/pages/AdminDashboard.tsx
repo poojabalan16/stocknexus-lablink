@@ -415,6 +415,8 @@ const AdminDashboard = () => {
                         paginatedItems.map((item) => (
                           <TableRow key={item.id}>
                             <TableCell className="font-medium">{item.name}</TableCell>
+                            <TableCell>{item.lecture_book_number || "-"}</TableCell>
+                            <TableCell>{item.cabin_number || "-"}</TableCell>
                             <TableCell className="capitalize">{item.department}</TableCell>
                             <TableCell>
                               <span className={item.quantity < 10 ? "text-destructive font-bold" : ""}>

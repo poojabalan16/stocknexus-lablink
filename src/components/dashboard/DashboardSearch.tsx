@@ -130,7 +130,7 @@ export function DashboardSearch() {
             />
           </div>
           <Select value={departmentFilter} onValueChange={handleDeptChange}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-44">
               <SelectValue placeholder="Department" />
             </SelectTrigger>
             <SelectContent>
@@ -138,6 +138,19 @@ export function DashboardSearch() {
               {ALL_DEPARTMENTS.map(d => (
                 <SelectItem key={d} value={d}>{d}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="working">Working</SelectItem>
+              <SelectItem value="scrap">Scrap</SelectItem>
+              <SelectItem value="outdated">Outdated</SelectItem>
+              <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
             </SelectContent>
           </Select>
         </div>
