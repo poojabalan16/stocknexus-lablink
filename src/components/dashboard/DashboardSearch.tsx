@@ -30,8 +30,8 @@ export function DashboardSearch() {
   const [searching, setSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const performSearch = useCallback(async (value: string, dept: string) => {
-    if (value.length < 1 && dept === "all") {
+  const performSearch = useCallback(async (value: string, dept: string, status: string) => {
+    if (value.length < 1 && dept === "all" && status === "all") {
       setResults([]);
       setHasSearched(false);
       return;
