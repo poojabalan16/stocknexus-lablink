@@ -67,6 +67,10 @@ export function DashboardSearch() {
         dbQuery = dbQuery.eq("department", dept as any);
       }
 
+      if (status !== "all") {
+        dbQuery = dbQuery.eq("item_status", status);
+      }
+
       const { data } = await dbQuery.range(from, from + batchSize - 1);
       if (!data || data.length === 0) break;
       allData = [...allData, ...data];
