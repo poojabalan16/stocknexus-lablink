@@ -160,20 +160,33 @@ const AdminDashboard = () => {
     }
   };
 
+  const uniqueCabins = useMemo(() => {
+    const cabins = new Set<string>();
+    allItems.forEach((item) => {
+      if (item.cabin_number) cabins.add(item.cabin_number);
+    });
+    return Array.from(cabins).sort();
+  }, [allItems]);
+
   const filteredItems = useMemo(() => {
     return allItems.filter((item) => {
+      const q = searchQuery.toLowerCase();
       const matchesSearch = searchQuery === "" || 
-        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.cabin_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.lecture_book_number?.toLowerCase().includes(searchQuery.toLowerCase());
+        item.name?.toLowerCase().includes(q) ||
+        item.model?.toLowerCase().includes(q) ||
+        item.serial_number?.toLowerCase().includes(q) ||
+        item.cabin_number?.toLowerCase().includes(q) ||
+        item.lecture_book_number?.toLowerCase().includes(q) ||
+        item.category?.toLowerCase().includes(q) ||
+        (String(item.quantity) === searchQuery.trim());
       
       const matchesDepartment = departmentFilter === "all" || item.department === departmentFilter;
+      const matchesStatus = statusFilter === "all" || item.item_status === statusFilter;
+      const matchesCabin = cabinFilter === "all" || item.cabin_number === cabinFilter;
       
-      return matchesSearch && matchesDepartment;
+      return matchesSearch && matchesDepartment && matchesStatus && matchesCabin;
     });
-  }, [allItems, searchQuery, departmentFilter]);
+  }, [allItems, searchQuery, departmentFilter, statusFilter, cabinFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
