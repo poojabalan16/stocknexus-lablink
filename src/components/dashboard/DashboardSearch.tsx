@@ -25,12 +25,13 @@ export function DashboardSearch() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const performSearch = useCallback(async (value: string, dept: string) => {
-    if (value.length < 1 && dept === "all") {
+  const performSearch = useCallback(async (value: string, dept: string, status: string) => {
+    if (value.length < 1 && dept === "all" && status === "all") {
       setResults([]);
       setHasSearched(false);
       return;
@@ -66,6 +67,10 @@ export function DashboardSearch() {
         dbQuery = dbQuery.eq("department", dept as any);
       }
 
+      if (status !== "all") {
+        dbQuery = dbQuery.eq("item_status", status);
+      }
+
       const { data } = await dbQuery.range(from, from + batchSize - 1);
       if (!data || data.length === 0) break;
       allData = [...allData, ...data];
@@ -79,12 +84,17 @@ export function DashboardSearch() {
 
   const handleSearch = (value: string) => {
     setQuery(value);
-    performSearch(value, departmentFilter);
+    performSearch(value, departmentFilter, statusFilter);
   };
 
   const handleDeptChange = (val: string) => {
     setDepartmentFilter(val);
-    performSearch(query, val);
+    performSearch(query, val, statusFilter);
+  };
+
+  const handleStatusChange = (val: string) => {
+    setStatusFilter(val);
+    performSearch(query, departmentFilter, val);
   };
 
   const highlightMatch = (text: string, search: string) => {
@@ -120,7 +130,7 @@ export function DashboardSearch() {
             />
           </div>
           <Select value={departmentFilter} onValueChange={handleDeptChange}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-44">
               <SelectValue placeholder="Department" />
             </SelectTrigger>
             <SelectContent>
@@ -128,6 +138,19 @@ export function DashboardSearch() {
               {ALL_DEPARTMENTS.map(d => (
                 <SelectItem key={d} value={d}>{d}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="working">Working</SelectItem>
+              <SelectItem value="scrap">Scrap</SelectItem>
+              <SelectItem value="outdated">Outdated</SelectItem>
+              <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
             </SelectContent>
           </Select>
         </div>

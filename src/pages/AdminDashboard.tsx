@@ -48,6 +48,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [cabinFilter, setCabinFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -158,25 +160,38 @@ const AdminDashboard = () => {
     }
   };
 
+  const uniqueCabins = useMemo(() => {
+    const cabins = new Set<string>();
+    allItems.forEach((item) => {
+      if (item.cabin_number) cabins.add(item.cabin_number);
+    });
+    return Array.from(cabins).sort();
+  }, [allItems]);
+
   const filteredItems = useMemo(() => {
     return allItems.filter((item) => {
+      const q = searchQuery.toLowerCase();
       const matchesSearch = searchQuery === "" || 
-        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.cabin_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.lecture_book_number?.toLowerCase().includes(searchQuery.toLowerCase());
+        item.name?.toLowerCase().includes(q) ||
+        item.model?.toLowerCase().includes(q) ||
+        item.serial_number?.toLowerCase().includes(q) ||
+        item.cabin_number?.toLowerCase().includes(q) ||
+        item.lecture_book_number?.toLowerCase().includes(q) ||
+        item.category?.toLowerCase().includes(q) ||
+        (String(item.quantity) === searchQuery.trim());
       
       const matchesDepartment = departmentFilter === "all" || item.department === departmentFilter;
+      const matchesStatus = statusFilter === "all" || item.item_status === statusFilter;
+      const matchesCabin = cabinFilter === "all" || item.cabin_number === cabinFilter;
       
-      return matchesSearch && matchesDepartment;
+      return matchesSearch && matchesDepartment && matchesStatus && matchesCabin;
     });
-  }, [allItems, searchQuery, departmentFilter]);
+  }, [allItems, searchQuery, departmentFilter, statusFilter, cabinFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, departmentFilter]);
+  }, [searchQuery, departmentFilter, statusFilter, cabinFilter]);
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
   const paginatedItems = useMemo(() => {
@@ -328,33 +343,61 @@ const AdminDashboard = () => {
                 <CardDescription>Manage items across all departments</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search by name, model, serial number, ledger book..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
+                <div className="flex flex-col gap-3 mb-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name, model, serial number, ledger book, cabin, category..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                      <SelectTrigger className="w-full sm:w-44">
+                        <SelectValue placeholder="Department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Departments</SelectItem>
+                        {ALL_DEPARTMENTS.map((dept) => (
+                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full sm:w-44">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="available">Available</SelectItem>
+                        <SelectItem value="working">Working</SelectItem>
+                        <SelectItem value="scrap">Scrap</SelectItem>
+                        <SelectItem value="outdated">Outdated</SelectItem>
+                        <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={cabinFilter} onValueChange={setCabinFilter}>
+                      <SelectTrigger className="w-full sm:w-44">
+                        <SelectValue placeholder="Cabin Number" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Cabins</SelectItem>
+                        {uniqueCabins.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                    <SelectTrigger className="w-full sm:w-48">
-                      <SelectValue placeholder="Filter by department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Departments</SelectItem>
-                      {ALL_DEPARTMENTS.map((dept) => (
-                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
+                        <TableHead>Ledger Book</TableHead>
+                        <TableHead>Cabin No.</TableHead>
                         <TableHead>Department</TableHead>
                         <TableHead>Quantity</TableHead>
                         <TableHead>Status</TableHead>
@@ -364,7 +407,7 @@ const AdminDashboard = () => {
                     <TableBody>
                       {paginatedItems.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                         <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                             No items found
                           </TableCell>
                         </TableRow>
@@ -372,6 +415,8 @@ const AdminDashboard = () => {
                         paginatedItems.map((item) => (
                           <TableRow key={item.id}>
                             <TableCell className="font-medium">{item.name}</TableCell>
+                            <TableCell>{item.lecture_book_number || "-"}</TableCell>
+                            <TableCell>{item.cabin_number || "-"}</TableCell>
                             <TableCell className="capitalize">{item.department}</TableCell>
                             <TableCell>
                               <span className={item.quantity < 10 ? "text-destructive font-bold" : ""}>
