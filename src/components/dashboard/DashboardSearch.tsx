@@ -25,6 +25,7 @@ export function DashboardSearch() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
