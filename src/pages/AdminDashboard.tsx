@@ -48,6 +48,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [cabinFilter, setCabinFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [stats, setStats] = useState({
     totalUsers: 0,
