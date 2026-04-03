@@ -396,6 +396,8 @@ const AdminDashboard = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
+                        <TableHead>Ledger Book</TableHead>
+                        <TableHead>Cabin No.</TableHead>
                         <TableHead>Department</TableHead>
                         <TableHead>Quantity</TableHead>
                         <TableHead>Status</TableHead>
