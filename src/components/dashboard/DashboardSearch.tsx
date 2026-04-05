@@ -77,7 +77,7 @@ export function DashboardSearch() {
     while (true) {
       let dbQuery = supabase
         .from("inventory_items")
-        .select("id, name, department, quantity, item_status, lecture_book_number, cabin_number");
+        .select("id, name, department, quantity, item_status, lecture_book_number, cabin_number, model");
 
       if (value.length >= 1) {
         const isNumeric = /^\d+$/.test(value.trim());
