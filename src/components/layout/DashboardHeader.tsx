@@ -51,10 +51,16 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-6">
+    <header className="sticky top-0 z-10 flex h-20 items-center gap-4 border-b bg-card px-6 shadow-sm">
       <SidebarTrigger />
       
-      <img src={collegeLogo} alt="College Logo" className="h-10 object-contain hidden sm:block" />
+      <div className="flex items-center gap-3">
+        <img src={collegeLogo} alt="College Logo" className="h-14 w-auto object-contain" />
+        <div className="hidden sm:flex flex-col">
+          <span className="text-lg font-bold text-primary leading-tight tracking-tight">StockNexus</span>
+          <span className="text-[11px] text-muted-foreground leading-tight">Inventory Management System</span>
+        </div>
+      </div>
 
       <div className="flex-1" />
 
