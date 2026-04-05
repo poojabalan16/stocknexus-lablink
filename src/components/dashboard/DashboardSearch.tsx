@@ -104,6 +104,10 @@ export function DashboardSearch() {
         dbQuery = dbQuery.eq("cabin_number", cabin);
       }
 
+      if (model !== "all") {
+        dbQuery = dbQuery.eq("model", model);
+      }
+
       const { data } = await dbQuery.range(from, from + batchSize - 1);
       if (!data || data.length === 0) break;
       allData = [...allData, ...data];
