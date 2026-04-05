@@ -43,17 +43,21 @@ export function DashboardSearch() {
 
   // Fetch unique cabin numbers on mount
   useEffect(() => {
-    const fetchCabins = async () => {
-      const { data } = await supabase
-        .from("inventory_items")
-        .select("cabin_number")
-        .not("cabin_number", "is", null);
-      if (data) {
-        const cabins = [...new Set(data.map(d => d.cabin_number).filter(Boolean))] as string[];
+    const fetchFilters = async () => {
+      const [cabinRes, modelRes] = await Promise.all([
+        supabase.from("inventory_items").select("cabin_number").not("cabin_number", "is", null),
+        supabase.from("inventory_items").select("model").not("model", "is", null),
+      ]);
+      if (cabinRes.data) {
+        const cabins = [...new Set(cabinRes.data.map(d => d.cabin_number).filter(Boolean))] as string[];
         setUniqueCabins(cabins.sort());
       }
+      if (modelRes.data) {
+        const models = [...new Set(modelRes.data.map(d => d.model).filter(Boolean))] as string[];
+        setUniqueModels(models.sort());
+      }
     };
-    fetchCabins();
+    fetchFilters();
   }, []);
 
   const performSearch = useCallback(async (value: string, dept: string, category: string, cabin: string) => {
