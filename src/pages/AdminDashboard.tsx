@@ -181,7 +181,7 @@ const AdminDashboard = () => {
         (String(item.quantity) === searchQuery.trim());
       
       const matchesDepartment = departmentFilter === "all" || item.department === departmentFilter;
-      const matchesStatus = statusFilter === "all" || item.item_status === statusFilter;
+      
       const matchesCabin = cabinFilter === "all" || item.cabin_number === cabinFilter;
       
       return matchesSearch && matchesDepartment && matchesStatus && matchesCabin;
