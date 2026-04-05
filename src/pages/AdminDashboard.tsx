@@ -191,7 +191,7 @@ const AdminDashboard = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, departmentFilter, statusFilter, cabinFilter]);
+  }, [searchQuery, departmentFilter, cabinFilter]);
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
   const paginatedItems = useMemo(() => {
