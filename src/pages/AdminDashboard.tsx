@@ -169,6 +169,14 @@ const AdminDashboard = () => {
     return Array.from(cabins).sort();
   }, [allItems]);
 
+  const uniqueModels = useMemo(() => {
+    const models = new Set<string>();
+    allItems.forEach((item) => {
+      if (item.model) models.add(item.model);
+    });
+    return Array.from(models).sort();
+  }, [allItems]);
+
   const filteredItems = useMemo(() => {
     return allItems.filter((item) => {
       const q = searchQuery.toLowerCase();
