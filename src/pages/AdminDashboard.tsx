@@ -365,19 +365,8 @@ const AdminDashboard = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-full sm:w-44">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="available">Available</SelectItem>
-                        <SelectItem value="working">Working</SelectItem>
-                        <SelectItem value="scrap">Scrap</SelectItem>
-                        <SelectItem value="outdated">Outdated</SelectItem>
-                        <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
-                      </SelectContent>
-                    </Select>
+
+
                     <Select value={cabinFilter} onValueChange={setCabinFilter}>
                       <SelectTrigger className="w-full sm:w-44">
                         <SelectValue placeholder="Cabin Number" />
