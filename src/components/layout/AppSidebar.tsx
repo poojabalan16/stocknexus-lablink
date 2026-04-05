@@ -108,7 +108,6 @@ export function AppSidebar() {
       <SidebarContent>
         <div className="p-4">
           <div className="flex items-center gap-2">
-            <img src={collegeLogo} alt="College Logo" className="h-8 object-contain" />
             {!collapsed && <span className="text-lg font-bold text-primary">StockNexus</span>}
           </div>
         </div>
