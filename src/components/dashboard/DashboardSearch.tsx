@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Constants } from "@/integrations/supabase/types";
 
 const ALL_DEPARTMENTS = Constants.public.Enums.department;
+
+const ITEM_CATEGORIES = [
+  "Monitor", "CPU", "Keyboard", "Mouse", "Printer", "Scanner", "Projector",
+  "UPS", "Router", "Switch", "Server", "Laptop", "Desktop", "Chair", "Table",
+  "Whiteboard", "AC", "Fan", "Light", "Cable", "Software", "Other"
+];
 
 interface SearchResult {
   id: string;
@@ -32,8 +38,23 @@ export function DashboardSearch() {
   const [hasSearched, setHasSearched] = useState(false);
   const [uniqueCabins, setUniqueCabins] = useState<string[]>([]);
 
-  const performSearch = useCallback(async (value: string, dept: string, status: string) => {
-    if (value.length < 1 && dept === "all" && status === "all") {
+  // Fetch unique cabin numbers on mount
+  useEffect(() => {
+    const fetchCabins = async () => {
+      const { data } = await supabase
+        .from("inventory_items")
+        .select("cabin_number")
+        .not("cabin_number", "is", null);
+      if (data) {
+        const cabins = [...new Set(data.map(d => d.cabin_number).filter(Boolean))] as string[];
+        setUniqueCabins(cabins.sort());
+      }
+    };
+    fetchCabins();
+  }, []);
+
+  const performSearch = useCallback(async (value: string, dept: string, category: string, cabin: string) => {
+    if (value.length < 1 && dept === "all" && category === "all" && cabin === "all") {
       setResults([]);
       setHasSearched(false);
       return;
@@ -42,7 +63,6 @@ export function DashboardSearch() {
     setSearching(true);
     setHasSearched(true);
 
-    // Paginated fetch to avoid 1000 limit
     let allData: SearchResult[] = [];
     let from = 0;
     const batchSize = 1000;
@@ -69,8 +89,12 @@ export function DashboardSearch() {
         dbQuery = dbQuery.eq("department", dept as any);
       }
 
-      if (status !== "all") {
-        dbQuery = dbQuery.eq("item_status", status);
+      if (category !== "all") {
+        dbQuery = dbQuery.ilike("name", `%${category}%`);
+      }
+
+      if (cabin !== "all") {
+        dbQuery = dbQuery.eq("cabin_number", cabin);
       }
 
       const { data } = await dbQuery.range(from, from + batchSize - 1);
@@ -86,17 +110,22 @@ export function DashboardSearch() {
 
   const handleSearch = (value: string) => {
     setQuery(value);
-    performSearch(value, departmentFilter, statusFilter);
+    performSearch(value, departmentFilter, categoryFilter, cabinFilter);
   };
 
   const handleDeptChange = (val: string) => {
     setDepartmentFilter(val);
-    performSearch(query, val, statusFilter);
+    performSearch(query, val, categoryFilter, cabinFilter);
   };
 
-  const handleStatusChange = (val: string) => {
-    setStatusFilter(val);
-    performSearch(query, departmentFilter, val);
+  const handleCategoryChange = (val: string) => {
+    setCategoryFilter(val);
+    performSearch(query, departmentFilter, val, cabinFilter);
+  };
+
+  const handleCabinChange = (val: string) => {
+    setCabinFilter(val);
+    performSearch(query, departmentFilter, categoryFilter, val);
   };
 
   const highlightMatch = (text: string, search: string) => {
@@ -142,17 +171,26 @@ export function DashboardSearch() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={statusFilter} onValueChange={handleStatusChange}>
+          <Select value={categoryFilter} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-full sm:w-44">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder="Item Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="available">Available</SelectItem>
-              <SelectItem value="working">Working</SelectItem>
-              <SelectItem value="scrap">Scrap</SelectItem>
-              <SelectItem value="outdated">Outdated</SelectItem>
-              <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
+              <SelectItem value="all">All Items</SelectItem>
+              {ITEM_CATEGORIES.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={cabinFilter} onValueChange={handleCabinChange}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Cabin Number" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Cabins</SelectItem>
+              {uniqueCabins.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
