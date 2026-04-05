@@ -388,6 +388,17 @@ const AdminDashboard = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <Select value={modelFilter} onValueChange={setModelFilter}>
+                      <SelectTrigger className="w-full sm:w-44">
+                        <SelectValue placeholder="Model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Models</SelectItem>
+                        {uniqueModels.map((m) => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="rounded-md border">
