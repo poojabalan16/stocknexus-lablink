@@ -186,7 +186,7 @@ const AdminDashboard = () => {
       
       return matchesSearch && matchesDepartment && matchesCabin;
     });
-  }, [allItems, searchQuery, departmentFilter, statusFilter, cabinFilter]);
+  }, [allItems, searchQuery, departmentFilter, cabinFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
