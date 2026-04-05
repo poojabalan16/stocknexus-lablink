@@ -25,6 +25,7 @@ interface SearchResult {
   item_status: string;
   lecture_book_number: string | null;
   cabin_number: string | null;
+  model: string | null;
 }
 
 export function DashboardSearch() {
