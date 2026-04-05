@@ -192,10 +192,11 @@ const AdminDashboard = () => {
       const matchesDepartment = departmentFilter === "all" || item.department === departmentFilter;
       
       const matchesCabin = cabinFilter === "all" || item.cabin_number === cabinFilter;
+      const matchesModel = modelFilter === "all" || item.model === modelFilter;
       
-      return matchesSearch && matchesDepartment && matchesCabin;
+      return matchesSearch && matchesDepartment && matchesCabin && matchesModel;
     });
-  }, [allItems, searchQuery, departmentFilter, cabinFilter]);
+  }, [allItems, searchQuery, departmentFilter, cabinFilter, modelFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
