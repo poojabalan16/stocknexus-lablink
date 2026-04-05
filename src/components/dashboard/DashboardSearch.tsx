@@ -121,22 +121,27 @@ export function DashboardSearch() {
 
   const handleSearch = (value: string) => {
     setQuery(value);
-    performSearch(value, departmentFilter, categoryFilter, cabinFilter);
+    performSearch(value, departmentFilter, categoryFilter, cabinFilter, modelFilter);
   };
 
   const handleDeptChange = (val: string) => {
     setDepartmentFilter(val);
-    performSearch(query, val, categoryFilter, cabinFilter);
+    performSearch(query, val, categoryFilter, cabinFilter, modelFilter);
   };
 
   const handleCategoryChange = (val: string) => {
     setCategoryFilter(val);
-    performSearch(query, departmentFilter, val, cabinFilter);
+    performSearch(query, departmentFilter, val, cabinFilter, modelFilter);
   };
 
   const handleCabinChange = (val: string) => {
     setCabinFilter(val);
-    performSearch(query, departmentFilter, categoryFilter, val);
+    performSearch(query, departmentFilter, categoryFilter, val, modelFilter);
+  };
+
+  const handleModelChange = (val: string) => {
+    setModelFilter(val);
+    performSearch(query, departmentFilter, categoryFilter, cabinFilter, val);
   };
 
   const highlightMatch = (text: string, search: string) => {
