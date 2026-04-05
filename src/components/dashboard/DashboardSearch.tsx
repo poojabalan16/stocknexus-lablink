@@ -34,10 +34,12 @@ export function DashboardSearch() {
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [cabinFilter, setCabinFilter] = useState("all");
+  const [modelFilter, setModelFilter] = useState("all");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [uniqueCabins, setUniqueCabins] = useState<string[]>([]);
+  const [uniqueModels, setUniqueModels] = useState<string[]>([]);
 
   // Fetch unique cabin numbers on mount
   useEffect(() => {
