@@ -25,6 +25,7 @@ interface SearchResult {
   item_status: string;
   lecture_book_number: string | null;
   cabin_number: string | null;
+  model: string | null;
 }
 
 export function DashboardSearch() {
@@ -33,28 +34,34 @@ export function DashboardSearch() {
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [cabinFilter, setCabinFilter] = useState("all");
+  const [modelFilter, setModelFilter] = useState("all");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [uniqueCabins, setUniqueCabins] = useState<string[]>([]);
+  const [uniqueModels, setUniqueModels] = useState<string[]>([]);
 
   // Fetch unique cabin numbers on mount
   useEffect(() => {
-    const fetchCabins = async () => {
-      const { data } = await supabase
-        .from("inventory_items")
-        .select("cabin_number")
-        .not("cabin_number", "is", null);
-      if (data) {
-        const cabins = [...new Set(data.map(d => d.cabin_number).filter(Boolean))] as string[];
+    const fetchFilters = async () => {
+      const [cabinRes, modelRes] = await Promise.all([
+        supabase.from("inventory_items").select("cabin_number").not("cabin_number", "is", null),
+        supabase.from("inventory_items").select("model").not("model", "is", null),
+      ]);
+      if (cabinRes.data) {
+        const cabins = [...new Set(cabinRes.data.map(d => d.cabin_number).filter(Boolean))] as string[];
         setUniqueCabins(cabins.sort());
       }
+      if (modelRes.data) {
+        const models = [...new Set(modelRes.data.map(d => d.model).filter(Boolean))] as string[];
+        setUniqueModels(models.sort());
+      }
     };
-    fetchCabins();
+    fetchFilters();
   }, []);
 
-  const performSearch = useCallback(async (value: string, dept: string, category: string, cabin: string) => {
-    if (value.length < 1 && dept === "all" && category === "all" && cabin === "all") {
+  const performSearch = useCallback(async (value: string, dept: string, category: string, cabin: string, model: string) => {
+    if (value.length < 1 && dept === "all" && category === "all" && cabin === "all" && model === "all") {
       setResults([]);
       setHasSearched(false);
       return;
@@ -70,7 +77,7 @@ export function DashboardSearch() {
     while (true) {
       let dbQuery = supabase
         .from("inventory_items")
-        .select("id, name, department, quantity, item_status, lecture_book_number, cabin_number");
+        .select("id, name, department, quantity, item_status, lecture_book_number, cabin_number, model");
 
       if (value.length >= 1) {
         const isNumeric = /^\d+$/.test(value.trim());
@@ -97,6 +104,10 @@ export function DashboardSearch() {
         dbQuery = dbQuery.eq("cabin_number", cabin);
       }
 
+      if (model !== "all") {
+        dbQuery = dbQuery.eq("model", model);
+      }
+
       const { data } = await dbQuery.range(from, from + batchSize - 1);
       if (!data || data.length === 0) break;
       allData = [...allData, ...data];
@@ -110,22 +121,27 @@ export function DashboardSearch() {
 
   const handleSearch = (value: string) => {
     setQuery(value);
-    performSearch(value, departmentFilter, categoryFilter, cabinFilter);
+    performSearch(value, departmentFilter, categoryFilter, cabinFilter, modelFilter);
   };
 
   const handleDeptChange = (val: string) => {
     setDepartmentFilter(val);
-    performSearch(query, val, categoryFilter, cabinFilter);
+    performSearch(query, val, categoryFilter, cabinFilter, modelFilter);
   };
 
   const handleCategoryChange = (val: string) => {
     setCategoryFilter(val);
-    performSearch(query, departmentFilter, val, cabinFilter);
+    performSearch(query, departmentFilter, val, cabinFilter, modelFilter);
   };
 
   const handleCabinChange = (val: string) => {
     setCabinFilter(val);
-    performSearch(query, departmentFilter, categoryFilter, val);
+    performSearch(query, departmentFilter, categoryFilter, val, modelFilter);
+  };
+
+  const handleModelChange = (val: string) => {
+    setModelFilter(val);
+    performSearch(query, departmentFilter, categoryFilter, cabinFilter, val);
   };
 
   const highlightMatch = (text: string, search: string) => {
@@ -190,6 +206,17 @@ export function DashboardSearch() {
               <SelectItem value="all">All Cabins</SelectItem>
               {uniqueCabins.map(c => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={modelFilter} onValueChange={handleModelChange}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Model" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Models</SelectItem>
+              {uniqueModels.map(m => (
+                <SelectItem key={m} value={m}>{m}</SelectItem>
               ))}
             </SelectContent>
           </Select>

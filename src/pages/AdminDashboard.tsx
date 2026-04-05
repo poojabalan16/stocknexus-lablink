@@ -50,6 +50,7 @@ const AdminDashboard = () => {
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
   
   const [cabinFilter, setCabinFilter] = useState<string>("all");
+  const [modelFilter, setModelFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -168,6 +169,14 @@ const AdminDashboard = () => {
     return Array.from(cabins).sort();
   }, [allItems]);
 
+  const uniqueModels = useMemo(() => {
+    const models = new Set<string>();
+    allItems.forEach((item) => {
+      if (item.model) models.add(item.model);
+    });
+    return Array.from(models).sort();
+  }, [allItems]);
+
   const filteredItems = useMemo(() => {
     return allItems.filter((item) => {
       const q = searchQuery.toLowerCase();
@@ -183,15 +192,16 @@ const AdminDashboard = () => {
       const matchesDepartment = departmentFilter === "all" || item.department === departmentFilter;
       
       const matchesCabin = cabinFilter === "all" || item.cabin_number === cabinFilter;
+      const matchesModel = modelFilter === "all" || item.model === modelFilter;
       
-      return matchesSearch && matchesDepartment && matchesCabin;
+      return matchesSearch && matchesDepartment && matchesCabin && matchesModel;
     });
-  }, [allItems, searchQuery, departmentFilter, cabinFilter]);
+  }, [allItems, searchQuery, departmentFilter, cabinFilter, modelFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, departmentFilter, cabinFilter]);
+  }, [searchQuery, departmentFilter, cabinFilter, modelFilter]);
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
   const paginatedItems = useMemo(() => {
@@ -375,6 +385,17 @@ const AdminDashboard = () => {
                         <SelectItem value="all">All Cabins</SelectItem>
                         {uniqueCabins.map((c) => (
                           <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={modelFilter} onValueChange={setModelFilter}>
+                      <SelectTrigger className="w-full sm:w-44">
+                        <SelectValue placeholder="Model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Models</SelectItem>
+                        {uniqueModels.map((m) => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
