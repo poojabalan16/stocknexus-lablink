@@ -184,7 +184,7 @@ const AdminDashboard = () => {
       
       const matchesCabin = cabinFilter === "all" || item.cabin_number === cabinFilter;
       
-      return matchesSearch && matchesDepartment && matchesStatus && matchesCabin;
+      return matchesSearch && matchesDepartment && matchesCabin;
     });
   }, [allItems, searchQuery, departmentFilter, statusFilter, cabinFilter]);
 
