@@ -60,8 +60,8 @@ export function DashboardSearch() {
     fetchFilters();
   }, []);
 
-  const performSearch = useCallback(async (value: string, dept: string, category: string, cabin: string) => {
-    if (value.length < 1 && dept === "all" && category === "all" && cabin === "all") {
+  const performSearch = useCallback(async (value: string, dept: string, category: string, cabin: string, model: string) => {
+    if (value.length < 1 && dept === "all" && category === "all" && cabin === "all" && model === "all") {
       setResults([]);
       setHasSearched(false);
       return;
