@@ -25,10 +25,12 @@ export function DashboardSearch() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [cabinFilter, setCabinFilter] = useState("all");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [uniqueCabins, setUniqueCabins] = useState<string[]>([]);
 
   const performSearch = useCallback(async (value: string, dept: string, status: string) => {
     if (value.length < 1 && dept === "all" && status === "all") {
