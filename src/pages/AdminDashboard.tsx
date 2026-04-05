@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  
   const [cabinFilter, setCabinFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [stats, setStats] = useState({
@@ -181,17 +181,17 @@ const AdminDashboard = () => {
         (String(item.quantity) === searchQuery.trim());
       
       const matchesDepartment = departmentFilter === "all" || item.department === departmentFilter;
-      const matchesStatus = statusFilter === "all" || item.item_status === statusFilter;
+      
       const matchesCabin = cabinFilter === "all" || item.cabin_number === cabinFilter;
       
-      return matchesSearch && matchesDepartment && matchesStatus && matchesCabin;
+      return matchesSearch && matchesDepartment && matchesCabin;
     });
-  }, [allItems, searchQuery, departmentFilter, statusFilter, cabinFilter]);
+  }, [allItems, searchQuery, departmentFilter, cabinFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, departmentFilter, statusFilter, cabinFilter]);
+  }, [searchQuery, departmentFilter, cabinFilter]);
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
   const paginatedItems = useMemo(() => {
@@ -365,19 +365,8 @@ const AdminDashboard = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-full sm:w-44">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="available">Available</SelectItem>
-                        <SelectItem value="working">Working</SelectItem>
-                        <SelectItem value="scrap">Scrap</SelectItem>
-                        <SelectItem value="outdated">Outdated</SelectItem>
-                        <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
-                      </SelectContent>
-                    </Select>
+
+
                     <Select value={cabinFilter} onValueChange={setCabinFilter}>
                       <SelectTrigger className="w-full sm:w-44">
                         <SelectValue placeholder="Cabin Number" />
