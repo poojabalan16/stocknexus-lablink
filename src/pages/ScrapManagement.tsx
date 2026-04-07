@@ -381,6 +381,41 @@ const ScrapManagement = () => {
 
   const getSelectedItem = () => inventoryItems.find(i => i.id === selectedItem);
 
+  const toggleSelectItem = (id: string) => {
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === filteredScrapItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(filteredScrapItems.map(i => i.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItems.size === 0) return;
+    const confirmed = window.confirm(`Are you sure you want to delete ${selectedItems.size} scrap record(s)?`);
+    if (!confirmed) return;
+    try {
+      const { error } = await supabase
+        .from("scrap_items")
+        .delete()
+        .in("id", Array.from(selectedItems));
+      if (error) throw error;
+      toast.success(`Deleted ${selectedItems.size} scrap record(s)`);
+      setSelectedItems(new Set());
+      fetchScrapItems();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete scrap items");
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
