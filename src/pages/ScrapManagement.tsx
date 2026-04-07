@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Search, Plus, Package, Calendar, User, IndianRupee, Upload } from "lucide-react";
+import { Trash2, Search, Plus, Package, Calendar, User, IndianRupee, Upload, CheckSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { format } from "date-fns";
 import { Constants } from "@/integrations/supabase/types";
