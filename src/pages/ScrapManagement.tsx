@@ -79,6 +79,7 @@ const ScrapManagement = () => {
   const [vendorContact, setVendorContact] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [itemQuantities, setItemQuantities] = useState<Record<string, string>>({});
 
   // Bulk import state
   const [bulkFile, setBulkFile] = useState<File | null>(null);
@@ -185,69 +186,57 @@ const ScrapManagement = () => {
     }
   };
 
-  const handleScrapItem = async () => {
-    if (!selectedItem || !scrapReason || !userId) {
-      toast.error("Please select an item and provide a reason");
-      return;
-    }
-
-    const item = inventoryItems.find(i => i.id === selectedItem);
-    if (!item) {
-      toast.error("Selected item not found");
-      return;
-    }
-
-    const qty = parseInt(scrapQuantity);
-    if (isNaN(qty) || qty < 1 || qty > item.quantity) {
-      toast.error(`Quantity must be between 1 and ${item.quantity}`);
+  const handleScrapItems = async () => {
+    if (selectedItems.size === 0 || !scrapReason || !userId) {
+      toast.error("Please select item(s) and provide a reason");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const { error: scrapError } = await supabase
-        .from("scrap_items")
-        .insert({
-          item_id: item.id,
-          item_name: item.name,
-          item_model: item.model,
-          item_serial_number: item.serial_number,
-          department: item.department as any,
-          quantity: qty,
-          reason: scrapReason,
-          scrapped_by: userId,
-          notes: scrapNotes || null,
-          scrap_value: scrapValue ? parseFloat(scrapValue) : null,
-          vendor_name: vendorName || null,
-          vendor_contact: vendorContact || null,
-          lecture_book_number: item.lecture_book_number || null,
-        });
+      for (const itemId of selectedItems) {
+        const item = inventoryItems.find(i => i.id === itemId);
+        if (!item) continue;
 
-      if (scrapError) throw scrapError;
+        const qty = parseInt(itemQuantities[itemId] || "1");
+        if (isNaN(qty) || qty < 1 || qty > item.quantity) continue;
 
-      const newQuantity = item.quantity - qty;
-      if (newQuantity === 0) {
-        const { error: deleteError } = await supabase
-          .from("inventory_items")
-          .delete()
-          .eq("id", item.id);
-        if (deleteError) throw deleteError;
-      } else {
-        const { error: updateError } = await supabase
-          .from("inventory_items")
-          .update({ quantity: newQuantity })
-          .eq("id", item.id);
-        if (updateError) throw updateError;
+        const { error: scrapError } = await supabase
+          .from("scrap_items")
+          .insert({
+            item_id: item.id,
+            item_name: item.name,
+            item_model: item.model,
+            item_serial_number: item.serial_number,
+            department: item.department as any,
+            quantity: qty,
+            reason: scrapReason,
+            scrapped_by: userId,
+            notes: scrapNotes || null,
+            scrap_value: scrapValue ? parseFloat(scrapValue) : null,
+            vendor_name: vendorName || null,
+            vendor_contact: vendorContact || null,
+            lecture_book_number: item.lecture_book_number || null,
+          });
+
+        if (scrapError) throw scrapError;
+
+        const newQuantity = item.quantity - qty;
+        if (newQuantity === 0) {
+          await supabase.from("inventory_items").delete().eq("id", item.id);
+        } else {
+          await supabase.from("inventory_items").update({ quantity: newQuantity }).eq("id", item.id);
+        }
       }
 
-      toast.success("Item moved to scrap successfully");
+      toast.success(`${selectedItems.size} item(s) moved to scrap successfully`);
       setIsDialogOpen(false);
       resetForm();
       fetchScrapItems();
       fetchInventoryItems();
     } catch (error: any) {
-      toast.error(error.message || "Failed to scrap item");
+      toast.error(error.message || "Failed to scrap items");
     } finally {
       setSubmitting(false);
     }
@@ -256,6 +245,8 @@ const ScrapManagement = () => {
   const resetForm = () => {
     setSelectedDepartment(userRole === "hod" ? userDepartment || "all" : "all");
     setSelectedItem("");
+    setSelectedItems(new Set());
+    setItemQuantities({});
     setScrapQuantity("1");
     setScrapReason("");
     setScrapNotes("");
@@ -381,40 +372,7 @@ const ScrapManagement = () => {
 
   const getSelectedItem = () => inventoryItems.find(i => i.id === selectedItem);
 
-  const toggleSelectItem = (id: string) => {
-    setSelectedItems(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
-  const toggleSelectAll = () => {
-    if (selectedItems.size === filteredScrapItems.length) {
-      setSelectedItems(new Set());
-    } else {
-      setSelectedItems(new Set(filteredScrapItems.map(i => i.id)));
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedItems.size === 0) return;
-    const confirmed = window.confirm(`Are you sure you want to delete ${selectedItems.size} scrap record(s)?`);
-    if (!confirmed) return;
-    try {
-      const { error } = await supabase
-        .from("scrap_items")
-        .delete()
-        .in("id", Array.from(selectedItems));
-      if (error) throw error;
-      toast.success(`Deleted ${selectedItems.size} scrap record(s)`);
-      setSelectedItems(new Set());
-      fetchScrapItems();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete scrap items");
-    }
-  };
 
   if (loading) {
     return (
@@ -480,37 +438,84 @@ const ScrapManagement = () => {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="item">Select Item *</Label>
-                  <Select value={selectedItem} onValueChange={setSelectedItem}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an item" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredInventoryItems.map(item => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name} {item.serial_number ? `(${item.serial_number})` : ""} - {item.department} (Qty: {item.quantity})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Select Items to Scrap *</Label>
+                  {filteredInventoryItems.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No items available in this department</p>
+                  ) : (
+                    <div className="rounded-md border max-h-60 overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-10">
+                              <Checkbox
+                                checked={selectedItems.size === filteredInventoryItems.length && filteredInventoryItems.length > 0}
+                                onCheckedChange={() => {
+                                  if (selectedItems.size === filteredInventoryItems.length) {
+                                    setSelectedItems(new Set());
+                                    setItemQuantities({});
+                                  } else {
+                                    setSelectedItems(new Set(filteredInventoryItems.map(i => i.id)));
+                                    const q: Record<string, string> = {};
+                                    filteredInventoryItems.forEach(i => { q[i.id] = String(i.quantity); });
+                                    setItemQuantities(q);
+                                  }
+                                }}
+                              />
+                            </TableHead>
+                            <TableHead>Item Name</TableHead>
+                            <TableHead>Serial #</TableHead>
+                            <TableHead>Dept</TableHead>
+                            <TableHead>Available</TableHead>
+                            <TableHead>Qty to Scrap</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredInventoryItems.map(item => (
+                            <TableRow key={item.id} className={selectedItems.has(item.id) ? "bg-muted/50" : ""}>
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedItems.has(item.id)}
+                                  onCheckedChange={() => {
+                                    const next = new Set(selectedItems);
+                                    if (next.has(item.id)) {
+                                      next.delete(item.id);
+                                      const q = { ...itemQuantities };
+                                      delete q[item.id];
+                                      setItemQuantities(q);
+                                    } else {
+                                      next.add(item.id);
+                                      setItemQuantities(prev => ({ ...prev, [item.id]: String(item.quantity) }));
+                                    }
+                                    setSelectedItems(next);
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell className="font-medium text-sm">{item.name}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{item.serial_number || "-"}</TableCell>
+                              <TableCell><Badge variant="outline" className="text-xs">{item.department}</Badge></TableCell>
+                              <TableCell>{item.quantity}</TableCell>
+                              <TableCell>
+                                {selectedItems.has(item.id) && (
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max={item.quantity}
+                                    className="w-20 h-8 text-sm"
+                                    value={itemQuantities[item.id] || "1"}
+                                    onChange={(e) => setItemQuantities(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                  />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                  {selectedItems.size > 0 && (
+                    <p className="text-xs text-muted-foreground">{selectedItems.size} item(s) selected</p>
+                  )}
                 </div>
-
-                {getSelectedItem() && (
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Quantity to Scrap *</Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      min="1"
-                      max={getSelectedItem()?.quantity}
-                      value={scrapQuantity}
-                      onChange={(e) => setScrapQuantity(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Maximum: {getSelectedItem()?.quantity}
-                    </p>
-                  </div>
-                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="reason">Reason for Scrapping *</Label>
@@ -584,12 +589,12 @@ const ScrapManagement = () => {
                   Cancel
                 </Button>
                 <Button 
-                  onClick={handleScrapItem} 
-                  disabled={submitting || !selectedItem || !scrapReason}
+                  onClick={handleScrapItems} 
+                  disabled={submitting || selectedItems.size === 0 || !scrapReason}
                   className="gap-2"
                 >
                   <Trash2 className="h-4 w-4" />
-                  {submitting ? "Processing..." : "Move to Scrap"}
+                  {submitting ? "Processing..." : `Move ${selectedItems.size} Item(s) to Scrap`}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -705,19 +710,8 @@ const ScrapManagement = () => {
               )}
             </div>
 
-            {selectedItems.size > 0 && (
-              <div className="flex items-center gap-3 p-3 rounded-md bg-muted mb-4">
-                <CheckSquare className="h-4 w-4" />
-                <span className="text-sm font-medium">{selectedItems.size} item(s) selected</span>
-                <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="ml-auto gap-2">
-                  <Trash2 className="h-4 w-4" />
-                  Delete Selected
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setSelectedItems(new Set())}>
-                  Clear Selection
-                </Button>
-              </div>
-            )}
+
+
 
             {filteredScrapItems.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">
@@ -730,12 +724,6 @@ const ScrapManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">
-                        <Checkbox
-                          checked={selectedItems.size === filteredScrapItems.length && filteredScrapItems.length > 0}
-                          onCheckedChange={toggleSelectAll}
-                        />
-                      </TableHead>
                       <TableHead>Item Name</TableHead>
                       <TableHead>LBN</TableHead>
                       <TableHead>Model/Serial</TableHead>
@@ -750,13 +738,7 @@ const ScrapManagement = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredScrapItems.map((item) => (
-                      <TableRow key={item.id} className={selectedItems.has(item.id) ? "bg-muted/50" : ""}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedItems.has(item.id)}
-                            onCheckedChange={() => toggleSelectItem(item.id)}
-                          />
-                        </TableCell>
+                      <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.item_name}</TableCell>
                         <TableCell>
                           {item.lecture_book_number ? (
