@@ -757,12 +757,6 @@ const ScrapManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">
-                        <Checkbox
-                          checked={selectedItems.size === filteredScrapItems.length && filteredScrapItems.length > 0}
-                          onCheckedChange={toggleSelectAll}
-                        />
-                      </TableHead>
                       <TableHead>Item Name</TableHead>
                       <TableHead>LBN</TableHead>
                       <TableHead>Model/Serial</TableHead>
@@ -777,13 +771,7 @@ const ScrapManagement = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredScrapItems.map((item) => (
-                      <TableRow key={item.id} className={selectedItems.has(item.id) ? "bg-muted/50" : ""}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedItems.has(item.id)}
-                            onCheckedChange={() => toggleSelectItem(item.id)}
-                          />
-                        </TableCell>
+                      <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.item_name}</TableCell>
                         <TableCell>
                           {item.lecture_book_number ? (
