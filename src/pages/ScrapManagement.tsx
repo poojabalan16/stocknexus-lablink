@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Search, Plus, Package, Calendar, User, IndianRupee, Upload } from "lucide-react";
+import { Trash2, Search, Plus, Package, Calendar, User, IndianRupee, Upload, CheckSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { format } from "date-fns";
 import { Constants } from "@/integrations/supabase/types";
@@ -77,6 +78,7 @@ const ScrapManagement = () => {
   const [vendorName, setVendorName] = useState("");
   const [vendorContact, setVendorContact] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   // Bulk import state
   const [bulkFile, setBulkFile] = useState<File | null>(null);
@@ -122,13 +124,22 @@ const ScrapManagement = () => {
 
   const fetchScrapItems = async () => {
     try {
-      const { data, error } = await supabase
-        .from("scrap_items")
-        .select("*")
-        .order("scrapped_at", { ascending: false });
-
-      if (error) throw error;
-      setScrapItems(data || []);
+      let allData: ScrapItem[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("scrap_items")
+          .select("*")
+          .order("scrapped_at", { ascending: false })
+          .range(from, from + batchSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData = [...allData, ...data];
+        if (data.length < batchSize) break;
+        from += batchSize;
+      }
+      setScrapItems(allData);
     } catch (error: any) {
       toast.error("Failed to load scrap items");
     } finally {
@@ -369,6 +380,41 @@ const ScrapManagement = () => {
   const totalScrapValue = scrapItems.reduce((sum, item) => sum + (item.scrap_value || 0), 0);
 
   const getSelectedItem = () => inventoryItems.find(i => i.id === selectedItem);
+
+  const toggleSelectItem = (id: string) => {
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === filteredScrapItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(filteredScrapItems.map(i => i.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItems.size === 0) return;
+    const confirmed = window.confirm(`Are you sure you want to delete ${selectedItems.size} scrap record(s)?`);
+    if (!confirmed) return;
+    try {
+      const { error } = await supabase
+        .from("scrap_items")
+        .delete()
+        .in("id", Array.from(selectedItems));
+      if (error) throw error;
+      toast.success(`Deleted ${selectedItems.size} scrap record(s)`);
+      setSelectedItems(new Set());
+      fetchScrapItems();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete scrap items");
+    }
+  };
 
   if (loading) {
     return (
@@ -659,6 +705,20 @@ const ScrapManagement = () => {
               )}
             </div>
 
+            {selectedItems.size > 0 && (
+              <div className="flex items-center gap-3 p-3 rounded-md bg-muted mb-4">
+                <CheckSquare className="h-4 w-4" />
+                <span className="text-sm font-medium">{selectedItems.size} item(s) selected</span>
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="ml-auto gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Delete Selected
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setSelectedItems(new Set())}>
+                  Clear Selection
+                </Button>
+              </div>
+            )}
+
             {filteredScrapItems.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">
                 {searchQuery || departmentFilter !== "all" 
@@ -670,6 +730,12 @@ const ScrapManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={selectedItems.size === filteredScrapItems.length && filteredScrapItems.length > 0}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
                       <TableHead>Item Name</TableHead>
                       <TableHead>LBN</TableHead>
                       <TableHead>Model/Serial</TableHead>
@@ -684,7 +750,13 @@ const ScrapManagement = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredScrapItems.map((item) => (
-                      <TableRow key={item.id}>
+                      <TableRow key={item.id} className={selectedItems.has(item.id) ? "bg-muted/50" : ""}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedItems.has(item.id)}
+                            onCheckedChange={() => toggleSelectItem(item.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{item.item_name}</TableCell>
                         <TableCell>
                           {item.lecture_book_number ? (
