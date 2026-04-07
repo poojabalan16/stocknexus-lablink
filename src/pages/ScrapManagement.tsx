@@ -245,6 +245,8 @@ const ScrapManagement = () => {
   const resetForm = () => {
     setSelectedDepartment(userRole === "hod" ? userDepartment || "all" : "all");
     setSelectedItem("");
+    setSelectedItems(new Set());
+    setItemQuantities({});
     setScrapQuantity("1");
     setScrapReason("");
     setScrapNotes("");
