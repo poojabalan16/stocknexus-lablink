@@ -186,69 +186,57 @@ const ScrapManagement = () => {
     }
   };
 
-  const handleScrapItem = async () => {
-    if (!selectedItem || !scrapReason || !userId) {
-      toast.error("Please select an item and provide a reason");
-      return;
-    }
-
-    const item = inventoryItems.find(i => i.id === selectedItem);
-    if (!item) {
-      toast.error("Selected item not found");
-      return;
-    }
-
-    const qty = parseInt(scrapQuantity);
-    if (isNaN(qty) || qty < 1 || qty > item.quantity) {
-      toast.error(`Quantity must be between 1 and ${item.quantity}`);
+  const handleScrapItems = async () => {
+    if (selectedItems.size === 0 || !scrapReason || !userId) {
+      toast.error("Please select item(s) and provide a reason");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const { error: scrapError } = await supabase
-        .from("scrap_items")
-        .insert({
-          item_id: item.id,
-          item_name: item.name,
-          item_model: item.model,
-          item_serial_number: item.serial_number,
-          department: item.department as any,
-          quantity: qty,
-          reason: scrapReason,
-          scrapped_by: userId,
-          notes: scrapNotes || null,
-          scrap_value: scrapValue ? parseFloat(scrapValue) : null,
-          vendor_name: vendorName || null,
-          vendor_contact: vendorContact || null,
-          lecture_book_number: item.lecture_book_number || null,
-        });
+      for (const itemId of selectedItems) {
+        const item = inventoryItems.find(i => i.id === itemId);
+        if (!item) continue;
 
-      if (scrapError) throw scrapError;
+        const qty = parseInt(itemQuantities[itemId] || "1");
+        if (isNaN(qty) || qty < 1 || qty > item.quantity) continue;
 
-      const newQuantity = item.quantity - qty;
-      if (newQuantity === 0) {
-        const { error: deleteError } = await supabase
-          .from("inventory_items")
-          .delete()
-          .eq("id", item.id);
-        if (deleteError) throw deleteError;
-      } else {
-        const { error: updateError } = await supabase
-          .from("inventory_items")
-          .update({ quantity: newQuantity })
-          .eq("id", item.id);
-        if (updateError) throw updateError;
+        const { error: scrapError } = await supabase
+          .from("scrap_items")
+          .insert({
+            item_id: item.id,
+            item_name: item.name,
+            item_model: item.model,
+            item_serial_number: item.serial_number,
+            department: item.department as any,
+            quantity: qty,
+            reason: scrapReason,
+            scrapped_by: userId,
+            notes: scrapNotes || null,
+            scrap_value: scrapValue ? parseFloat(scrapValue) : null,
+            vendor_name: vendorName || null,
+            vendor_contact: vendorContact || null,
+            lecture_book_number: item.lecture_book_number || null,
+          });
+
+        if (scrapError) throw scrapError;
+
+        const newQuantity = item.quantity - qty;
+        if (newQuantity === 0) {
+          await supabase.from("inventory_items").delete().eq("id", item.id);
+        } else {
+          await supabase.from("inventory_items").update({ quantity: newQuantity }).eq("id", item.id);
+        }
       }
 
-      toast.success("Item moved to scrap successfully");
+      toast.success(`${selectedItems.size} item(s) moved to scrap successfully`);
       setIsDialogOpen(false);
       resetForm();
       fetchScrapItems();
       fetchInventoryItems();
     } catch (error: any) {
-      toast.error(error.message || "Failed to scrap item");
+      toast.error(error.message || "Failed to scrap items");
     } finally {
       setSubmitting(false);
     }
