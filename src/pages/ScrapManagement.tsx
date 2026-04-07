@@ -757,6 +757,7 @@ const ScrapManagement = () => {
                             onCheckedChange={() => toggleSelectItem(item.id)}
                           />
                         </TableCell>
+                        <TableCell className="font-medium">{item.item_name}</TableCell>
                         <TableCell>
                           {item.lecture_book_number ? (
                             <Badge variant="outline" className="font-mono text-xs">
