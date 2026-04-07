@@ -79,6 +79,7 @@ const ScrapManagement = () => {
   const [vendorContact, setVendorContact] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [itemQuantities, setItemQuantities] = useState<Record<string, string>>({});
 
   // Bulk import state
   const [bulkFile, setBulkFile] = useState<File | null>(null);
