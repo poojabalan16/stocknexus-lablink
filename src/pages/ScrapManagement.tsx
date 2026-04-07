@@ -122,13 +122,22 @@ const ScrapManagement = () => {
 
   const fetchScrapItems = async () => {
     try {
-      const { data, error } = await supabase
-        .from("scrap_items")
-        .select("*")
-        .order("scrapped_at", { ascending: false });
-
-      if (error) throw error;
-      setScrapItems(data || []);
+      let allData: ScrapItem[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("scrap_items")
+          .select("*")
+          .order("scrapped_at", { ascending: false })
+          .range(from, from + batchSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData = [...allData, ...data];
+        if (data.length < batchSize) break;
+        from += batchSize;
+      }
+      setScrapItems(allData);
     } catch (error: any) {
       toast.error("Failed to load scrap items");
     } finally {
