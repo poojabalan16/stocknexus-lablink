@@ -717,7 +717,7 @@ const ScrapManagement = () => {
                   Clear Selection
                 </Button>
               </div>
-            )
+            )}
 
             {filteredScrapItems.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">
