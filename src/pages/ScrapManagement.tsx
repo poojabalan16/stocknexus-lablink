@@ -705,6 +705,20 @@ const ScrapManagement = () => {
               )}
             </div>
 
+            {selectedItems.size > 0 && (
+              <div className="flex items-center gap-3 p-3 rounded-md bg-muted mb-4">
+                <CheckSquare className="h-4 w-4" />
+                <span className="text-sm font-medium">{selectedItems.size} item(s) selected</span>
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="ml-auto gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Delete Selected
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setSelectedItems(new Set())}>
+                  Clear Selection
+                </Button>
+              </div>
+            )
+
             {filteredScrapItems.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">
                 {searchQuery || departmentFilter !== "all" 
