@@ -268,12 +268,15 @@ const AddItem = () => {
         return;
       }
 
-      // Insert items
-      const { error } = await supabase
-        .from("inventory_items")
-        .insert(items);
-
-      if (error) throw error;
+      // Insert items in batches of 500
+      const batchSize = 500;
+      for (let i = 0; i < items.length; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        const { error } = await supabase
+          .from("inventory_items")
+          .insert(batch);
+        if (error) throw error;
+      }
 
       toast.success(`Successfully imported ${items.length} item(s)!`);
       setImportFile(null);
