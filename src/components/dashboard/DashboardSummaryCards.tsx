@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Package, AlertTriangle, Database } from "lucide-react";
 
 interface SummaryData {
   working: number;
+  totalItems: number;
+  totalDepartments: number;
+  lowStockItems: number;
 }
 
 async function fetchAllRows(table: "inventory_items", select: string) {
@@ -22,18 +25,36 @@ async function fetchAllRows(table: "inventory_items", select: string) {
 }
 
 export function DashboardSummaryCards() {
-  const [data, setData] = useState<SummaryData>({ working: 0 });
+  const [data, setData] = useState<SummaryData>({ working: 0, totalItems: 0, totalDepartments: 0, lowStockItems: 0 });
 
   const fetchData = async () => {
-    const items = await fetchAllRows("inventory_items", "quantity, item_status");
+    const items = await fetchAllRows("inventory_items", "quantity, item_status, department, name, low_stock_threshold");
 
-    const summary: SummaryData = { working: 0 };
+    let working = 0;
+    let totalItems = 0;
+    const deptSet = new Set<string>();
+
+    // Aggregate by name+department for low stock
+    const itemAggregates = new Map<string, { totalQty: number; threshold: number }>();
 
     items.forEach((item: any) => {
-      if (item.item_status === "working") summary.working += item.quantity;
+      totalItems += item.quantity;
+      if (item.item_status === "working") working += item.quantity;
+      deptSet.add(item.department);
+
+      const key = `${item.department}|${item.name}`;
+      if (!itemAggregates.has(key)) {
+        itemAggregates.set(key, { totalQty: 0, threshold: item.low_stock_threshold || 10 });
+      }
+      itemAggregates.get(key)!.totalQty += item.quantity;
     });
 
-    setData(summary);
+    let lowStockItems = 0;
+    itemAggregates.forEach(agg => {
+      if (agg.totalQty <= agg.threshold) lowStockItems++;
+    });
+
+    setData({ working, totalItems, totalDepartments: deptSet.size, lowStockItems });
   };
 
   useEffect(() => {
@@ -46,7 +67,10 @@ export function DashboardSummaryCards() {
   }, []);
 
   const cards = [
+    { title: "Total Items", value: data.totalItems, icon: Package, color: "text-primary" },
     { title: "Working Items", value: data.working, icon: CheckCircle2, color: "text-accent" },
+    { title: "Low Stock Items", value: data.lowStockItems, icon: AlertTriangle, color: "text-warning" },
+    { title: "Departments", value: data.totalDepartments, icon: Database, color: "text-primary" },
   ];
 
   return (

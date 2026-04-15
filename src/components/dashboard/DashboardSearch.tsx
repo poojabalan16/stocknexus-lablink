@@ -41,7 +41,6 @@ export function DashboardSearch() {
   const [uniqueCabins, setUniqueCabins] = useState<string[]>([]);
   const [uniqueModels, setUniqueModels] = useState<string[]>([]);
 
-  // Fetch unique cabin numbers on mount
   useEffect(() => {
     const fetchFilters = async () => {
       const [cabinRes, modelRes] = await Promise.all([
@@ -61,7 +60,8 @@ export function DashboardSearch() {
   }, []);
 
   const performSearch = useCallback(async (value: string, dept: string, category: string, cabin: string, model: string) => {
-    if (value.length < 1 && dept === "all" && category === "all" && cabin === "all" && model === "all") {
+    // Only clear if truly nothing is entered/selected
+    if (value.trim().length === 0 && dept === "all" && category === "all" && cabin === "all" && model === "all") {
       setResults([]);
       setHasSearched(false);
       return;
@@ -79,15 +79,16 @@ export function DashboardSearch() {
         .from("inventory_items")
         .select("id, name, department, quantity, item_status, lecture_book_number, cabin_number, model");
 
-      if (value.length >= 1) {
-        const isNumeric = /^\d+$/.test(value.trim());
+      if (value.trim().length >= 1) {
+        const trimmed = value.trim();
+        const isNumeric = /^\d+$/.test(trimmed);
         if (isNumeric) {
           dbQuery = dbQuery.or(
-            `quantity.eq.${value.trim()},name.ilike.%${value}%,lecture_book_number.ilike.%${value}%,cabin_number.ilike.%${value}%`
+            `quantity.eq.${trimmed},name.ilike.%${trimmed}%,lecture_book_number.ilike.%${trimmed}%,cabin_number.ilike.%${trimmed}%`
           );
         } else {
           dbQuery = dbQuery.or(
-            `name.ilike.%${value}%,department.ilike.%${value}%,lecture_book_number.ilike.%${value}%,cabin_number.ilike.%${value}%`
+            `name.ilike.%${trimmed}%,department.ilike.%${trimmed}%,lecture_book_number.ilike.%${trimmed}%,cabin_number.ilike.%${trimmed}%,model.ilike.%${trimmed}%`
           );
         }
       }
@@ -145,7 +146,7 @@ export function DashboardSearch() {
   };
 
   const highlightMatch = (text: string, search: string) => {
-    if (!search || search.length < 1) return text;
+    if (!search || search.trim().length < 1) return text;
     const idx = text.toLowerCase().indexOf(search.toLowerCase());
     if (idx === -1) return text;
     return (
@@ -156,6 +157,9 @@ export function DashboardSearch() {
       </>
     );
   };
+
+  // Calculate total quantity of displayed results
+  const totalDisplayedQuantity = results.reduce((sum, r) => sum + r.quantity, 0);
 
   return (
     <Card className="animate-fade-in">
@@ -170,7 +174,7 @@ export function DashboardSearch() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by item name, ledger book, cabin number, or quantity..."
+              placeholder="Search by item name, ledger book, cabin number, model, or quantity..."
               value={query}
               onChange={e => handleSearch(e.target.value)}
               className="pl-10"
@@ -258,8 +262,10 @@ export function DashboardSearch() {
                 ))}
               </TableBody>
             </Table>
-            <div className="p-2 text-xs text-muted-foreground text-center border-t">
-              {results.length} result{results.length !== 1 ? "s" : ""} found
+            <div className="p-2 text-xs text-muted-foreground text-center border-t flex justify-center gap-4">
+              <span>{results.length} item{results.length !== 1 ? "s" : ""} found</span>
+              <span>•</span>
+              <span>Total quantity: {totalDisplayedQuantity.toLocaleString()}</span>
             </div>
           </div>
         )}
