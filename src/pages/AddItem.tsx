@@ -437,6 +437,7 @@ const AddItem = () => {
                           <SelectItem value="Accounts">Accounts</SelectItem>
                           <SelectItem value="Exam Cell">Exam Cell</SelectItem>
                           <SelectItem value="Library">Library</SelectItem>
+                          <SelectItem value="Main Stock">Main Stock</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
