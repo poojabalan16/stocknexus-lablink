@@ -31,6 +31,16 @@ const AddItem = () => {
   const [department, setDepartment] = useState("");
   const [specifications, setSpecifications] = useState("");
 
+  // Structured specification fields for EEE, ECE, Physics
+  const [specRange, setSpecRange] = useState("");
+  const [specMake, setSpecMake] = useState("");
+  const [specType, setSpecType] = useState("");
+  const [specAccuracy, setSpecAccuracy] = useState("");
+  const [specResolution, setSpecResolution] = useState("");
+  const [specPower, setSpecPower] = useState("");
+
+  const labDepartments = ["EEE", "ECE", "Physics"];
+
   // Bulk import state
   const [importFile, setImportFile] = useState<File | null>(null);
 
