@@ -31,6 +31,16 @@ const AddItem = () => {
   const [department, setDepartment] = useState("");
   const [specifications, setSpecifications] = useState("");
 
+  // Structured specification fields for EEE, ECE, Physics
+  const [specRange, setSpecRange] = useState("");
+  const [specMake, setSpecMake] = useState("");
+  const [specType, setSpecType] = useState("");
+  const [specAccuracy, setSpecAccuracy] = useState("");
+  const [specResolution, setSpecResolution] = useState("");
+  const [specPower, setSpecPower] = useState("");
+
+  const labDepartments = ["EEE", "ECE", "Physics"];
+
   // Bulk import state
   const [importFile, setImportFile] = useState<File | null>(null);
 
@@ -74,9 +84,16 @@ const AddItem = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Parse specifications if provided
-      let specsObj = {};
-      if (specifications.trim()) {
+      // Build specifications object
+      let specsObj: Record<string, any> = {};
+      if (labDepartments.includes(department)) {
+        if (specRange) specsObj.range = specRange;
+        if (specMake) specsObj.make = specMake;
+        if (specType) specsObj.type = specType;
+        if (specAccuracy) specsObj.accuracy = specAccuracy;
+        if (specResolution) specsObj.resolution = specResolution;
+        if (specPower) specsObj.power_supply = specPower;
+      } else if (specifications.trim()) {
         try {
           specsObj = JSON.parse(specifications);
         } catch {
@@ -410,20 +427,82 @@ const AddItem = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="specs">Specifications (JSON format)</Label>
-                    <Textarea
-                      id="specs"
-                      value={specifications}
-                      onChange={(e) => setSpecifications(e.target.value)}
-                      placeholder='{"processor": "Intel i7", "ram": "16GB", "storage": "512GB SSD"}'
-                      rows={4}
-                      className="font-mono text-sm"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Enter specifications in JSON format (optional)
-                    </p>
-                  </div>
+                  {labDepartments.includes(department) ? (
+                    <div className="space-y-4">
+                      <Label className="text-base font-semibold">Equipment Specifications</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="specRange">Range</Label>
+                          <Input
+                            id="specRange"
+                            value={specRange}
+                            onChange={(e) => setSpecRange(e.target.value)}
+                            placeholder="e.g., 0-200V, 0-10A"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="specMake">Make / Brand</Label>
+                          <Input
+                            id="specMake"
+                            value={specMake}
+                            onChange={(e) => setSpecMake(e.target.value)}
+                            placeholder="e.g., Keysight, Fluke, Tektronix"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="specType">Type</Label>
+                          <Input
+                            id="specType"
+                            value={specType}
+                            onChange={(e) => setSpecType(e.target.value)}
+                            placeholder="e.g., Digital, Analog, Dual Channel"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="specAccuracy">Accuracy</Label>
+                          <Input
+                            id="specAccuracy"
+                            value={specAccuracy}
+                            onChange={(e) => setSpecAccuracy(e.target.value)}
+                            placeholder="e.g., ±0.5%, ±1 digit"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="specResolution">Resolution</Label>
+                          <Input
+                            id="specResolution"
+                            value={specResolution}
+                            onChange={(e) => setSpecResolution(e.target.value)}
+                            placeholder="e.g., 0.01V, 1mA"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="specPower">Power Supply</Label>
+                          <Input
+                            id="specPower"
+                            value={specPower}
+                            onChange={(e) => setSpecPower(e.target.value)}
+                            placeholder="e.g., 230V AC, Battery operated"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="specs">Specifications (JSON format)</Label>
+                      <Textarea
+                        id="specs"
+                        value={specifications}
+                        onChange={(e) => setSpecifications(e.target.value)}
+                        placeholder='{"processor": "Intel i7", "ram": "16GB", "storage": "512GB SSD"}'
+                        rows={4}
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Enter specifications in JSON format (optional)
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex gap-4">
                     <Button type="submit" disabled={loading}>
