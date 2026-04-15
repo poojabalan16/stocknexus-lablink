@@ -213,23 +213,33 @@ const AddItem = () => {
       }
 
       // Map data to items
+      const validDepartments = ["IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech", "Chemical", "Mechanical", "Accounts", "Exam Cell", "Library", "ECE", "EEE", "CIVIL", "CSBS", "MBA", "Main Stock"];
+
       const items = parsedData.map((row: any) => {
         const normalizedRow: any = {};
         Object.keys(row).forEach(key => {
           normalizedRow[key.toLowerCase()] = row[key];
         });
 
+        // Validate department
+        const dept = normalizedRow.department?.toString().trim();
+        if (!dept || !validDepartments.includes(dept)) {
+          return null; // Skip invalid department rows
+        }
+
         const item: any = {
           created_by: user.id,
           status: "available",
           name: normalizedRow.name,
-          department: normalizedRow.department,
+          department: dept,
           quantity: parseInt(normalizedRow.quantity) || 1,
           model: normalizedRow.model || null,
           serial_number: normalizedRow.serial_number || normalizedRow.serialnumber || null,
+          lecture_book_number: normalizedRow.lecture_book_number || normalizedRow.ledger_book_number || normalizedRow.lbn || null,
           low_stock_threshold: parseInt(normalizedRow.low_stock_threshold || normalizedRow.lowstockthreshold || normalizedRow.threshold) || 5,
           location: normalizedRow.location || null,
           cabin_number: normalizedRow.cabin_number || normalizedRow.cabinnumber || null,
+          category: normalizedRow.category || null,
         };
 
         // Handle specifications
@@ -245,7 +255,12 @@ const AddItem = () => {
         }
 
         return item;
-      }).filter((item: any) => item.name && item.department);
+      }).filter((item: any) => item !== null && item.name && item.department);
+
+      const skippedCount = parsedData.length - items.length;
+      if (skippedCount > 0) {
+        toast.warning(`${skippedCount} row(s) skipped due to invalid/missing department. Valid: ${validDepartments.join(", ")}`);
+      }
 
       if (items.length === 0) {
         toast.error("No valid items found in file");
@@ -553,7 +568,7 @@ const AddItem = () => {
                       <li>• Supported formats: CSV (.csv), Excel (.xlsx, .xls)</li>
                       <li>• Required columns: name, department, quantity</li>
                       <li>• Optional columns: model, serial_number, location, cabin_number, low_stock_threshold, specifications</li>
-                      <li>• Department values: IT, AI&DS, CSE, Physics, Chemistry, Bio-tech</li>
+                      <li>• Department values: IT, AI&DS, CSE, ECE, EEE, CIVIL, CSBS, MBA, Physics, Chemistry, Bio-tech, Chemical, Mechanical, Accounts, Exam Cell, Library, Main Stock</li>
                       <li>• Specifications should be in JSON format if provided</li>
                     </ul>
                     <div className="mt-3 pt-3 border-t">
