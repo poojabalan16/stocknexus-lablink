@@ -84,9 +84,16 @@ const AddItem = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Parse specifications if provided
-      let specsObj = {};
-      if (specifications.trim()) {
+      // Build specifications object
+      let specsObj: Record<string, any> = {};
+      if (labDepartments.includes(department)) {
+        if (specRange) specsObj.range = specRange;
+        if (specMake) specsObj.make = specMake;
+        if (specType) specsObj.type = specType;
+        if (specAccuracy) specsObj.accuracy = specAccuracy;
+        if (specResolution) specsObj.resolution = specResolution;
+        if (specPower) specsObj.power_supply = specPower;
+      } else if (specifications.trim()) {
         try {
           specsObj = JSON.parse(specifications);
         } catch {
