@@ -63,8 +63,9 @@ const PAYMENT_STATUSES = [
 ];
 
 const DEPARTMENTS = [
-  "IT", "AI&DS", "CSE", "Physics", "Chemistry", "Bio-tech",
-  "Chemical", "Mechanical", "Accounts", "Exam Cell", "Library",
+  "IT", "AI&DS", "CSE", "ECE", "EEE", "Physics", "Chemistry", "Bio-tech",
+  "Chemical", "Mechanical", "CIVIL", "CSBS", "MBA", "Accounts", "Exam Cell", "Library",
+  "Main Stock",
 ];
 
 const AddPurchase = () => {
